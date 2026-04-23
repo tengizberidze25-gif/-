@@ -1,0 +1,2481 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FARMASI — ჩემი სტრუქტურა</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@300;400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a10;color:#f0e8ff;font-family:'Noto Sans Georgian',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+.screen{display:none;position:fixed;inset:0;z-index:1000;background:radial-gradient(ellipse at 30% 40%,#180920,#0a0a10 65%);align-items:center;justify-content:center}
+.screen.active{display:flex}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,107,157,.18);border-radius:20px;padding:44px 36px;width:340px;max-width:92vw;text-align:center}
+.logo{font-size:26px;font-weight:700;letter-spacing:4px;color:#ff6b9d;margin-bottom:4px}
+.sub{font-size:11px;color:#555;margin-bottom:30px;letter-spacing:1px}
+.lbl{font-size:10px;color:#777;text-align:left;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;display:block}
+.inp{width:100%;padding:13px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,107,157,.22);border-radius:10px;color:#fff;font-family:inherit;font-size:16px;outline:none;margin-bottom:14px;text-align:center;letter-spacing:2px}
+.inp:focus{border-color:rgba(255,107,157,.65)}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,#ff6b9d,#c85dd4);border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;touch-action:manipulation}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{width:100%;padding:10px;background:transparent;border:1px solid rgba(255,107,157,.25);border-radius:10px;color:#ff6b9d;font-size:12px;cursor:pointer;margin-top:10px;touch-action:manipulation;font-family:inherit}
+.err{font-size:12px;color:#ff6b5b;margin-top:10px;padding:8px 12px;background:rgba(255,100,90,.08);border:1px solid rgba(255,100,90,.2);border-radius:8px;display:none;text-align:left}
+.info-box{background:rgba(255,107,157,.07);border:1px solid rgba(255,107,157,.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#bbb;text-align:left}
+.info-box strong{color:#ff6b9d;display:block;margin-bottom:4px}
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.otp-d{width:44px;height:52px;background:rgba(255,255,255,.07);border:1px solid rgba(255,107,157,.25);border-radius:10px;color:#fff;font-size:22px;font-weight:700;text-align:center;outline:none;font-family:inherit}
+.otp-d:focus{border-color:#ff6b9d;background:rgba(255,107,157,.1)}
+.timer{font-size:11px;color:#555;margin-top:8px}
+.timer span{color:#ff6b9d}
+.loading{display:none;font-size:12px;color:#888;margin-top:10px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,107,157,.3);border-top-color:#ff6b9d;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#tree-screen{display:none;height:100vh;overflow:hidden;position:fixed;inset:0;background:#0a0a10}
+#hdr{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(180deg,rgba(10,10,16,.97) 70%,transparent);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#hlogo{font-size:17px;font-weight:700;letter-spacing:3px;color:#ff6b9d;flex-shrink:0}
+.hdiv{width:1px;height:22px;background:#333;flex-shrink:0}
+#hinfo{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+#hname{font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#htitle{font-size:10px;font-weight:600;letter-spacing:.3px}
+#hstats{display:flex;gap:12px;flex-shrink:0}
+.hs{display:flex;flex-direction:column;align-items:flex-end}
+.hs-v{font-size:14px;font-weight:700;color:#ff6b9d}
+.hs-l{font-size:8px;color:#555;text-transform:uppercase;letter-spacing:.3px}
+#hlogout{padding:5px 11px;background:transparent;border:1px solid rgba(255,107,157,.28);border-radius:6px;color:#ff6b9d;font-family:inherit;font-size:10px;cursor:pointer;flex-shrink:0;touch-action:manipulation}
+#srchbox{position:fixed;top:66px;left:14px;z-index:100;width:220px}
+#srchwrap{display:flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,107,157,.2);border-radius:8px;padding:5px 10px;gap:6px}
+#srchinput{background:none;border:none;outline:none;color:#fff;font-family:inherit;font-size:12px;width:100%}
+#srchinput::placeholder{color:#444}
+#srchres{background:rgba(8,8,20,.97);border:1px solid rgba(255,107,157,.2);border-radius:8px;margin-top:3px;max-height:220px;overflow-y:auto;display:none}
+.sri{padding:9px 11px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04)}
+.sri:hover,.sri:active{background:rgba(255,107,157,.1)}
+.sri-name{font-size:11px;font-weight:600;color:#fff}
+.sri-path{font-size:9px;color:#777;margin-top:1px}
+.sri-sz{font-size:9px;color:#ff6b9d;float:right}
+#analytics-btn{position:fixed;top:66px;right:60px;z-index:100;background:rgba(255,107,157,.12);border:1px solid rgba(255,107,157,.25);border-radius:8px;color:#ff6b9d;font-family:inherit;font-size:11px;padding:7px 14px;cursor:pointer;touch-action:manipulation}
+#analytics-btn:hover{background:rgba(255,107,157,.25)}
+#analytics-panel{position:fixed;top:0;right:0;bottom:0;width:320px;max-width:95vw;background:rgba(8,8,18,.97);border-left:1px solid rgba(255,107,157,.2);z-index:500;display:none;flex-direction:column;overflow:hidden}
+#analytics-panel.open{display:flex}
+#ap-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+#ap-title{font-size:14px;font-weight:700;color:#fff}
+#ap-close{color:#888;font-size:20px;cursor:pointer;line-height:1;padding:4px 8px}
+#ap-levels{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.ap-lvl{padding:5px 10px;border-radius:6px;border:1px solid rgba(255,107,157,.2);color:#aaa;font-size:11px;cursor:pointer;background:transparent;font-family:inherit;touch-action:manipulation}
+.ap-lvl.active{background:rgba(255,107,157,.2);color:#ff6b9d;border-color:#ff6b9d}
+#ap-body{flex:1;overflow-y:auto;padding:16px}
+#ap-total{font-size:12px;color:#888;margin-bottom:12px}
+.ap-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ap-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ap-label{font-size:12px;color:#bbb;flex:1}
+.ap-bar-wrap{width:70px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.ap-bar{height:100%;border-radius:3px;transition:width .4s}
+.ap-count{font-size:12px;color:#fff;font-weight:600;min-width:40px;text-align:right}
+.ap-pct-lbl{font-size:10px;color:#666;min-width:36px;text-align:right}
+#ctrl{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:100}
+.cb{width:36px;height:36px;background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.2);border-radius:8px;color:#ff6b9d;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation}
+.cb:hover,.cb:active{background:rgba(255,107,157,.25)}
+#legend{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:9px;flex-wrap:wrap;justify-content:center;z-index:100;background:rgba(8,8,18,.92);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:7px 14px;font-size:9px;color:#999;max-width:95vw}
+.li{display:flex;align-items:center;gap:4px}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#tip{position:fixed;background:rgba(5,5,15,.97);border:1px solid rgba(255,107,157,.3);border-radius:11px;padding:12px 14px;pointer-events:none;z-index:200;display:none;min-width:210px;max-width:270px;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+#tip-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+.tr{font-size:11px;color:#aaa;margin-bottom:4px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.tr b{color:#fff;font-weight:600}
+.node circle{cursor:pointer}
+.node text{font-family:"Noto Sans Georgian",sans-serif;pointer-events:none}
+.link{fill:none;opacity:.32}
+@media(max-width:600px){
+  #ctrl{right:auto;bottom:56px;top:auto;transform:none;left:50%;transform:translateX(-50%);flex-direction:row;background:rgba(8,8,18,.88);border:1px solid rgba(255,107,157,.15);border-radius:12px;padding:5px 8px}
+  #srchbox{width:calc(100vw - 28px)}
+  #legend{font-size:8px;gap:7px;padding:6px 11px}
+  .hs-v{font-size:12px}
+  .otp-d{width:40px;height:48px;font-size:20px}
+  #analytics-panel{width:100vw}
+  #analytics-btn{right:10px;top:auto;bottom:110px;padding:8px 14px}
+}
+
+/* ── SMS MODAL ── */
+#sms-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1500;display:none;align-items:center;justify-content:center;padding:20px}
+#sms-modal.open{display:flex}
+.sms-card{background:#12121a;border:1px solid rgba(255,107,157,.25);border-radius:16px;padding:24px;width:400px;max-width:95vw}
+.sms-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.sms-to{font-size:12px;color:#ff6b9d;margin-bottom:16px}
+.sms-textarea{width:100%;min-height:100px;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,107,157,.22);border-radius:10px;color:#fff;font-family:inherit;font-size:13px;outline:none;resize:vertical;margin-bottom:10px;box-sizing:border-box}
+.sms-textarea:focus{border-color:rgba(255,107,157,.65)}
+.sms-char{font-size:10px;color:#666;text-align:right;margin-bottom:14px}
+.sms-btns{display:flex;gap:10px}
+.sms-btn-cancel{flex:1;padding:12px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#aaa;font-family:inherit;font-size:12px;cursor:pointer}
+.sms-btn-send{flex:1;padding:12px;background:linear-gradient(135deg,#ff6b9d,#c85dd4);border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.sms-btn-send:disabled{opacity:.4;cursor:not-allowed}
+.sms-status{font-size:11px;margin-top:10px;padding:8px;border-radius:6px;display:none}
+.sms-status.ok{background:rgba(77,255,145,.1);color:#4dff91;border:1px solid rgba(77,255,145,.2)}
+.sms-status.err{background:rgba(255,107,107,.1);color:#ff6b6b;border:1px solid rgba(255,107,107,.2)}
+
+/* ── TOP-10 PANEL ── */
+#top10-btn{position:fixed;top:66px;right:146px;z-index:100;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);border-radius:8px;color:#ffd700;font-family:inherit;font-size:11px;padding:7px 12px;cursor:pointer;touch-action:manipulation}
+#top10-btn:hover{background:rgba(255,215,0,.25)}
+#top10-panel{position:fixed;top:0;left:0;bottom:0;width:340px;max-width:95vw;background:rgba(8,8,18,.97);border-right:1px solid rgba(255,215,0,.2);z-index:500;display:none;flex-direction:column;overflow:hidden}
+#top10-panel.open{display:flex}
+#t10-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+#t10-title{font-size:14px;font-weight:700;color:#ffd700}
+#t10-close{color:#888;font-size:20px;cursor:pointer;padding:4px 8px}
+#t10-tabs{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.t10-tab{flex:1;padding:7px;border-radius:6px;border:1px solid rgba(255,215,0,.15);color:#aaa;font-size:10px;cursor:pointer;background:transparent;font-family:inherit;touch-action:manipulation}
+.t10-tab.active{background:rgba(255,215,0,.15);color:#ffd700;border-color:#ffd700}
+#t10-body{flex:1;overflow-y:auto;padding:12px}
+.t10-item{padding:10px;margin-bottom:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;cursor:pointer;transition:background .2s}
+.t10-item:hover{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.3)}
+.t10-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.t10-rank{font-size:14px;font-weight:700;color:#ffd700;min-width:24px}
+.t10-name{flex:1;font-size:12px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t10-val{font-size:11px;color:#ff6b9d;font-weight:600}
+.t10-sub{font-size:10px;color:#777;margin-top:3px;padding-left:32px}
+
+/* ── FILTER PANEL ── */
+#filter-btn{position:fixed;top:66px;right:220px;z-index:100;background:rgba(77,255,145,.1);border:1px solid rgba(77,255,145,.25);border-radius:8px;color:#4dff91;font-family:inherit;font-size:11px;padding:7px 12px;cursor:pointer;touch-action:manipulation}
+#filter-btn:hover{background:rgba(77,255,145,.2)}
+#filter-btn.active{background:rgba(77,255,145,.3);color:#fff}
+#filter-panel{position:fixed;top:105px;right:10px;z-index:200;background:rgba(8,8,18,.97);border:1px solid rgba(77,255,145,.2);border-radius:12px;padding:12px;min-width:220px;max-height:75vh;overflow-y:auto;display:none}
+#filter-panel.open{display:block}
+.fp-title{font-size:11px;color:#888;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.fp-opt{padding:7px 10px;cursor:pointer;font-size:12px;color:#ccc;border-radius:6px;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.fp-opt:hover{background:rgba(255,255,255,.05)}
+.fp-opt.selected{background:rgba(77,255,145,.1);color:#4dff91}
+.fp-opt .fp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── GEN1 PANEL (first generation list) ── */
+#gen1-btn{position:fixed;top:66px;right:300px;z-index:100;background:rgba(125,145,255,.12);border:1px solid rgba(125,145,255,.3);border-radius:8px;color:#8fa5ff;font-family:inherit;font-size:11px;padding:7px 12px;cursor:pointer;touch-action:manipulation}
+#gen1-btn:hover{background:rgba(125,145,255,.25)}
+#gen1-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:95vw;background:rgba(8,8,18,.98);border-left:1px solid rgba(125,145,255,.25);z-index:500;display:none;flex-direction:column;overflow:hidden}
+#gen1-panel.open{display:flex}
+#g1-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#g1-title{font-size:14px;font-weight:700;color:#8fa5ff}
+#g1-close{color:#888;font-size:22px;cursor:pointer;line-height:1;padding:2px 8px}
+#g1-search{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+#g1-searchinp{width:100%;padding:8px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(125,145,255,.2);border-radius:8px;color:#fff;font-family:inherit;font-size:12px;outline:none;box-sizing:border-box}
+#g1-searchinp:focus{border-color:rgba(125,145,255,.6)}
+#g1-sort{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;flex-wrap:wrap}
+.g1-sbtn{flex:1;min-width:60px;padding:6px 8px;border-radius:6px;border:1px solid rgba(125,145,255,.18);color:#aaa;font-size:10px;cursor:pointer;background:transparent;font-family:inherit;touch-action:manipulation}
+.g1-sbtn.active{background:rgba(125,145,255,.18);color:#8fa5ff;border-color:#8fa5ff}
+#g1-filters{display:flex;gap:4px;padding:6px 14px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;flex-wrap:wrap}
+.g1-fbtn{padding:5px 9px;border-radius:12px;border:1px solid rgba(255,255,255,.1);color:#888;font-size:10px;cursor:pointer;background:transparent;font-family:inherit;touch-action:manipulation}
+.g1-fbtn.active{background:rgba(255,215,0,.15);color:#ffd700;border-color:#ffd700}
+#g1-count{padding:8px 14px;font-size:10px;color:#666;border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0}
+#g1-list{flex:1;overflow-y:auto;padding:6px 10px}
+.g1-item{padding:10px 11px;margin-bottom:5px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s}
+.g1-item:hover{background:rgba(125,145,255,.08);border-color:rgba(125,145,255,.25)}
+.g1-idx{font-size:10px;color:#555;min-width:28px;text-align:right;font-weight:600}
+.g1-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.g1-body{flex:1;min-width:0;overflow:hidden}
+.g1-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g1-meta{font-size:10px;color:#777;margin-top:2px;display:flex;gap:10px}
+.g1-meta b{color:#aaa;font-weight:600}
+.g1-pct{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
+#g1-pager{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;flex-wrap:wrap}
+.g1-pbtn{min-width:28px;height:28px;padding:0 8px;border-radius:6px;border:1px solid rgba(255,255,255,.1);color:#aaa;font-size:11px;cursor:pointer;background:transparent;font-family:inherit;touch-action:manipulation}
+.g1-pbtn:hover:not(:disabled){background:rgba(125,145,255,.15);color:#8fa5ff}
+.g1-pbtn.active{background:rgba(125,145,255,.25);color:#fff;border-color:#8fa5ff}
+.g1-pbtn:disabled{opacity:.3;cursor:not-allowed}
+.g1-ellips{color:#555;font-size:11px;padding:0 4px}
+
+@media(max-width:600px){
+  #top10-panel{width:100vw}
+  #top10-btn{right:10px;top:auto;bottom:160px;padding:8px 14px}
+  #filter-btn{right:10px;top:auto;bottom:210px;padding:8px 14px}
+  #analytics-btn{right:10px;top:auto;bottom:110px}
+  #filter-panel{right:10px;left:10px;top:auto;bottom:260px}
+  #gen1-btn{right:10px;top:auto;bottom:260px;padding:8px 14px}
+  #gen1-panel{width:100vw}
+}
+</style>
+</head>
+<body>
+
+<div class="screen active" id="s1">
+  <div class="card">
+    <div class="logo">FARMASI</div>
+    <div class="sub">ჩემი სტრუქტურა</div>
+    <label class="lbl">პირადი ნომერი</label>
+    <input class="inp" id="pid-inp" type="tel" placeholder="01001234567" style="letter-spacing:1px;text-align:left" onkeydown="if(event.key==='Enter')sendOtp()">
+    <button class="btn" id="send-btn" onclick="sendOtp()">კოდის გაგზავნა →</button>
+    <div class="loading" id="s1-load"><div class="spinner"></div>იგზავნება SMS...</div>
+    <div class="err" id="s1-err"></div>
+  </div>
+</div>
+
+<div class="screen" id="s2">
+  <div class="card">
+    <div class="logo">FARMASI</div>
+    <div class="sub">კოდის შეყვანა</div>
+    <div class="info-box">
+      <strong>📱 SMS გაიგზავნა</strong>
+      <span id="masked-phone">—</span>
+    </div>
+    <label class="lbl" style="text-align:center">6-ნიშნა კოდი</label>
+    <div class="otp-inputs" id="otp-wrap">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+      <input class="otp-d" maxlength="1" type="tel" inputmode="numeric">
+    </div>
+    <button class="btn" id="verify-btn" onclick="verifyOtp()">დადასტურება ✓</button>
+    <div class="loading" id="s2-load"><div class="spinner"></div>მოწმდება...</div>
+    <div class="err" id="s2-err"></div>
+    <div class="timer">კოდი ძალაშია: <span id="timer-txt">05:00</span></div>
+    <button class="btn-ghost" onclick="back()">← სხვა ნომრით შესვლა</button>
+  </div>
+</div>
+
+<div id="tree-screen">
+  <div id="hdr">
+    <div id="hlogo">FARMASI</div>
+    <div class="hdiv"></div>
+    <div id="hinfo">
+      <div id="hname">—</div>
+      <div id="htitle">—</div>
+    </div>
+    <div id="hstats">
+      <div class="hs"><div class="hs-v" id="hs-t">—</div><div class="hs-l">გუნდი</div></div>
+      <div class="hs"><div class="hs-v" id="hs-d">—</div><div class="hs-l">1-ლი</div></div>
+      <div class="hs"><div class="hs-v" id="hs-g">—</div><div class="hs-l">GV</div></div>
+      <div class="hs"><div class="hs-v" id="hs-b" style="color:#ffd700">—</div><div class="hs-l">ბონუსი₾</div></div>
+    </div>
+    <button id="hlogout" onclick="doLogout()">← გამოსვლა</button>
+  </div>
+  <div id="srchbox">
+    <div id="srchwrap"><span style="color:#ff6b9d;font-size:12px">🔍</span><input id="srchinput" placeholder="სახელი / ID / ტელეფონი..."></div>
+    <div id="srchres"></div>
+  </div>
+  <button id="analytics-btn" onclick="toggleAnalytics()">📊 ანალიტიკა</button>
+  <button id="top10-btn" onclick="toggleTop10()">⭐ ტოპ-10</button>
+  <button id="filter-btn" onclick="toggleFilter()">🔍 ფილტრი</button>
+  <button id="gen1-btn" onclick="toggleGen1()">📋 1-ლი თაობა</button>
+  
+  <div id="gen1-panel">
+    <div id="g1-header">
+      <div id="g1-title">📋 პირველი თაობა</div>
+      <div id="g1-close" onclick="toggleGen1()">✕</div>
+    </div>
+    <div id="g1-search">
+      <input id="g1-searchinp" placeholder="ძებნა სახელით..." type="text">
+    </div>
+    <div id="g1-sort">
+      <button class="g1-sbtn active" data-sort="size">გუნდი ↓</button>
+      <button class="g1-sbtn" data-sort="bonus">ბონუსი ↓</button>
+      <button class="g1-sbtn" data-sort="pct">%↓</button>
+      <button class="g1-sbtn" data-sort="name">სახელი</button>
+    </div>
+    <div id="g1-filters">
+      <button class="g1-fbtn active" data-filter="bonus">ბონუსიანი (3%+)</button>
+      <button class="g1-fbtn" data-filter="all">ყველა</button>
+      <button class="g1-fbtn" data-filter="active">აქტიური</button>
+      <button class="g1-fbtn" data-filter="inactive">არ-აქტ.</button>
+    </div>
+    <div id="g1-count"></div>
+    <div id="g1-list"></div>
+    <div id="g1-pager"></div>
+  </div>
+  
+  <div id="filter-panel">
+    <div class="fp-title">ტიტული</div>
+    <div class="fp-opt selected" data-title="all">
+      <div class="fp-dot" style="background:#fff"></div>ყველა
+    </div>
+    <div class="fp-opt" data-title="active">
+      <div class="fp-dot" style="background:#4dff91"></div>მხოლოდ აქტიური
+    </div>
+    <div class="fp-opt" data-title="inactive">
+      <div class="fp-dot" style="background:#ff4d6b"></div>არ-აქტიური
+    </div>
+    <div class="fp-opt" data-title="bonus">
+      <div class="fp-dot" style="background:#ffd700"></div>ბონუსიანი (3%+)
+    </div>
+    <div class="fp-opt" data-title="25">
+      <div class="fp-dot" style="background:#ffd700"></div>მენეჯერი (25%)
+    </div>
+    <div class="fp-opt" data-title="22">
+      <div class="fp-dot" style="background:#4dffb8"></div>22%
+    </div>
+    <div class="fp-opt" data-title="18">
+      <div class="fp-dot" style="background:#4db8ff"></div>18%
+    </div>
+    <div class="fp-opt" data-title="15">
+      <div class="fp-dot" style="background:#7c6ff7"></div>15%
+    </div>
+    <div class="fp-opt" data-title="12">
+      <div class="fp-dot" style="background:#c85dd4"></div>12%
+    </div>
+    <div class="fp-opt" data-title="9">
+      <div class="fp-dot" style="background:#4dff91"></div>9%
+    </div>
+    <div class="fp-opt" data-title="6">
+      <div class="fp-dot" style="background:#4dff91"></div>6%
+    </div>
+    <div class="fp-opt" data-title="3">
+      <div class="fp-dot" style="background:#4dff91"></div>3%
+    </div>
+    
+    <div class="fp-title" style="margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">დონე</div>
+    <div id="fp-levels"></div>
+  </div>
+  
+  <div id="top10-panel">
+    <div id="t10-header">
+      <div id="t10-title">⭐ ტოპ წევრები</div>
+      <div id="t10-close" onclick="toggleTop10()">✕</div>
+    </div>
+    <div id="t10-tabs">
+      <button class="t10-tab active" data-tab="team">გუნდი</button>
+      <button class="t10-tab" data-tab="gv">GV</button>
+      <button class="t10-tab" data-tab="bonus">ბონუსი</button>
+    </div>
+    <div id="t10-body"></div>
+  </div>
+
+  <div id="analytics-panel">
+    <div id="ap-header">
+      <div id="ap-title">📊 დონის ანალიტიკა</div>
+      <div id="ap-close" onclick="toggleAnalytics()">✕</div>
+    </div>
+    <div id="ap-levels"></div>
+    <div id="ap-body">
+      <div id="ap-total"></div>
+      <div id="ap-rows"></div>
+    </div>
+  </div>
+
+  <div id="ctrl">
+    <div class="cb" onclick="zi()">+</div>
+    <div class="cb" onclick="zo()">−</div>
+    <div class="cb" onclick="rv()" style="font-size:13px">↺</div>
+    <div class="cb" onclick="exp2()" style="font-size:11px">⊕</div>
+    <div class="cb" onclick="colA()" style="font-size:11px">⊖</div>
+    <div class="cb" id="orient-btn" onclick="toggleOrient()" style="font-size:13px" title="ჰორიზონტალური / ვერტიკალური">⇅</div>
+  </div>
+  <div id="legend">
+    <div class="li"><div class="ld" style="background:#ff6b9d"></div>თქვენ</div>
+    <div class="li"><div class="ld" style="background:#ffd700"></div>25%</div>
+    <div class="li"><div class="ld" style="background:#4dffb8"></div>22%</div>
+    <div class="li"><div class="ld" style="background:#4db8ff"></div>18%</div>
+    <div class="li"><div class="ld" style="background:#7c6ff7"></div>15%</div>
+    <div class="li"><div class="ld" style="background:#ff6b9d"></div>12%</div>
+    <div class="li"><div class="ld" style="background:#4dff91"></div>9%</div>
+    <div class="li"><div class="ld" style="background:#aaff4d"></div>6%</div>
+    <div class="li"><div class="ld" style="background:#ffb74d"></div>3%</div>
+    <div class="li"><div class="ld" style="background:#888"></div>0%აქტ.</div>
+    <div class="li"><div class="ld" style="background:#ff4d6b"></div>არ-აქტ.</div>
+  </div>
+  <div id="tip">
+    <div id="tip-name"></div>
+    <div class="tr">🏅 ტიტული: <b id="tip-ttl"></b></div>
+    <div class="tr">📊 GV: <b id="tip-gv"></b> | PV: <b id="tip-pv"></b></div>
+    <div class="tr">💰 ბონუსი: <b id="tip-bon"></b></div>
+    <div class="tr">👥 გუნდი: <b id="tip-tm"></b> | 1-ლი: <b id="tip-d1"></b></div>
+    <div class="tr"><b id="tip-st"></b></div>
+  </div>
+  
+<div id="sms-modal">
+  <div class="sms-card">
+    <div class="sms-title">📱 SMS-ის გაგზავნა</div>
+    <div class="sms-to" id="sms-to-name">—</div>
+    <textarea class="sms-textarea" id="sms-text" placeholder="ჩაწერეთ ტექსტი..." maxlength="500"></textarea>
+    <div class="sms-char"><span id="sms-char-count">0</span> / 500</div>
+    <div class="sms-btns">
+      <button class="sms-btn-cancel" onclick="closeSmsModal()">გაუქმება</button>
+      <button class="sms-btn-send" id="sms-send-btn" onclick="sendSmsToMember()">გაგზავნა →</button>
+    </div>
+    <div class="sms-status" id="sms-status"></div>
+  </div>
+</div>
+
+  <svg id="svg" style="touch-action:none"></svg>
+</div>
+
+<script>
+let TREE = {};
+    // TREE იტვირთება farmasi_data.json-დან (inline-ის ნაცვლად)
+    const TREE_READY = fetch('farmasi_data.json', { cache: 'no-store' })
+      .then(r => {
+        if (!r.ok) throw new Error('farmasi_data.json ვერ ჩაიტვირთა: ' + r.status);
+        return r.json();
+      })
+      .then(d => {
+        TREE = d;
+        window.TREE = TREE;
+        window.__fmOrigChildren = {};
+        for (const __id in TREE) {
+          if (TREE[__id] && Array.isArray(TREE[__id].c)) {
+            window.__fmOrigChildren[__id] = TREE[__id].c.slice();
+          }
+        }
+        try {
+          const __mode = localStorage.getItem('farmasi_filter_v1') || 'titled';
+          if (__mode !== 'all') {
+            const __pass = (n) => {
+              if (!n) return false;
+              if (__mode === 'active') return ((+n.pv || 0) + (+n.gv || 0)) > 0;
+              if (__mode === 'titled') {
+                const t = String(n.t || n.title || '').trim();
+                if (t && t !== '-') return true;
+                return +(n.b || n.bonus || 0) > 0;
+              }
+              return true;
+            };
+            for (const __id in window.__fmOrigChildren) {
+              TREE[__id].c = window.__fmOrigChildren[__id].filter(cid => __pass(TREE[cid]));
+            }
+            console.log('TREE filtered by mode:', __mode);
+          }
+        } catch (__e) { console.warn('Filter failed', __e); }
+        console.log('TREE loaded:', Object.keys(TREE).length, 'nodes');
+        const root = TREE['404445249'];
+        if (root && root.c) console.log('FARMASI direct children:', root.c.length);
+        return TREE;
+      })
+      .catch(e => {
+        console.error('TREE load failed:', e);
+        alert('მონაცემების ჩატვირთვა ვერ მოხერხდა: ' + e.message);
+      });
+    window.TREE_READY = TREE_READY;
+let SEARCH = [];
+const BONUS  = {"31001000524":{"pct":3,"gv":339.98,"pv":339.98,"bonus":10.2},"61001058901":{"pct":0,"gv":183.51,"pv":183.51,"bonus":0.0},"24001050038":{"pct":9,"gv":844.34,"pv":0,"bonus":13.91},"60001043932":{"pct":0,"gv":91.97,"pv":91.97,"bonus":0.0},"45001026742":{"pct":0,"gv":20.53,"pv":20.53,"bonus":0.0},"01019085303":{"pct":9,"gv":642.76,"pv":0,"bonus":24.92},"40001034974":{"pct":0,"gv":77.45,"pv":77.45,"bonus":0.0},"33001065625":{"pct":0,"gv":55.39,"pv":55.39,"bonus":0.0},"45001034073":{"pct":6,"gv":444.95,"pv":0,"bonus":18.83},"13001064908":{"pct":25,"gv":54208.01,"pv":114.97,"bonus":575.54},"13001058322":{"pct":25,"gv":39985.73,"pv":973.9,"bonus":1009.96},"34001008155":{"pct":0,"gv":70.06,"pv":70.06,"bonus":0.0},"61001032384":{"pct":0,"gv":56.09,"pv":56.09,"bonus":0.0},"35001096565":{"pct":0,"gv":48.3,"pv":48.3,"bonus":0.0},"60001133755":{"pct":0,"gv":128.49,"pv":128.49,"bonus":0.0},"60001118712":{"pct":0,"gv":168.59,"pv":168.59,"bonus":0.0},"54001050804":{"pct":0,"gv":196.25,"pv":196.25,"bonus":0.0},"40001039499":{"pct":0,"gv":100.11,"pv":100.11,"bonus":0.0},"62001024445":{"pct":0,"gv":53.36,"pv":53.36,"bonus":0.0},"19701113004":{"pct":9,"gv":789.54,"pv":125.95,"bonus":38.61},"16001032055":{"pct":3,"gv":326.67,"pv":326.67,"bonus":9.8},"19001106336":{"pct":0,"gv":169.45,"pv":169.45,"bonus":0.0},"29601041221":{"pct":12,"gv":1120.44,"pv":402.82,"bonus":121.61},"62006005752":{"pct":3,"gv":236.59,"pv":236.59,"bonus":7.1},"25001037227":{"pct":0,"gv":197.93,"pv":197.93,"bonus":0.0},"59001078193":{"pct":0,"gv":19.25,"pv":19.25,"bonus":0.0},"17001002661":{"pct":0,"gv":33.33,"pv":33.33,"bonus":0.0},"35001112872":{"pct":0,"gv":172.98,"pv":172.98,"bonus":0.0},"10001010443":{"pct":0,"gv":149.44,"pv":149.44,"bonus":0.0},"24001047363":{"pct":0,"gv":33.36,"pv":33.36,"bonus":0.0},"37001026937":{"pct":0,"gv":196.93,"pv":196.93,"bonus":0.0},"22001005442":{"pct":0,"gv":190.34,"pv":190.34,"bonus":0.0},"61006006311":{"pct":3,"gv":223.5,"pv":223.5,"bonus":6.71},"19001039671":{"pct":0,"gv":30.79,"pv":30.79,"bonus":0.0},"36001035375":{"pct":0,"gv":73.71,"pv":73.71,"bonus":0.0},"37001015920":{"pct":0,"gv":91.3,"pv":91.3,"bonus":0.0},"29001002855":{"pct":0,"gv":91.02,"pv":33.03,"bonus":0.0},"10001066634":{"pct":0,"gv":106.9,"pv":106.9,"bonus":0.0},"62007003894":{"pct":0,"gv":174.23,"pv":174.23,"bonus":0.0},"19001028225":{"pct":0,"gv":96.96,"pv":96.96,"bonus":0.0},"60001134445":{"pct":0,"gv":97.29,"pv":97.29,"bonus":0.0},"50001000664":{"pct":0,"gv":15.91,"pv":15.91,"bonus":0.0},"19001104776":{"pct":9,"gv":816.6,"pv":162.67,"bonus":73.49},"62402017192":{"pct":12,"gv":923.32,"pv":923.32,"bonus":110.8},"60001102901":{"pct":0,"gv":96.96,"pv":96.96,"bonus":0.0},"59001047299":{"pct":25,"gv":5965.75,"pv":780.41,"bonus":1101.56},"13201071222":{"pct":0,"gv":112.26,"pv":112.26,"bonus":0.0},"47001025209":{"pct":0,"gv":134.28,"pv":134.28,"bonus":0.0},"19001101730":{"pct":0,"gv":101.62,"pv":101.62,"bonus":0.0},"40001000327":{"pct":0,"gv":91.96,"pv":91.96,"bonus":0.0},"11001014615":{"pct":0,"gv":53.97,"pv":53.97,"bonus":0.0},"22001023646":{"pct":0,"gv":178.87,"pv":178.87,"bonus":0.0},"61009031369":{"pct":0,"gv":90.96,"pv":90.96,"bonus":0.0},"37001052322":{"pct":0,"gv":17.95,"pv":17.95,"bonus":0.0},"13001027408":{"pct":0,"gv":99.64,"pv":99.64,"bonus":0.0},"43001007733":{"pct":0,"gv":78.08,"pv":78.08,"bonus":0.0},"35001104673":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"24001016174":{"pct":0,"gv":197.93,"pv":197.93,"bonus":0.0},"59001120906":{"pct":0,"gv":58.2,"pv":58.2,"bonus":0.0},"43001034881":{"pct":0,"gv":53.18,"pv":53.18,"bonus":0.0},"54001026188":{"pct":0,"gv":121.0,"pv":121.0,"bonus":0.0},"59101128987":{"pct":0,"gv":29.07,"pv":29.07,"bonus":0.0},"61006012255":{"pct":0,"gv":133.05,"pv":133.05,"bonus":0.0},"18001055418":{"pct":9,"gv":678.97,"pv":678.97,"bonus":61.11},"59001106201":{"pct":3,"gv":291.8,"pv":0,"bonus":0.0},"60001050213":{"pct":0,"gv":94.29,"pv":94.29,"bonus":0.0},"35001062194":{"pct":0,"gv":167.23,"pv":167.23,"bonus":0.0},"35001103759":{"pct":6,"gv":587.03,"pv":501.96,"bonus":35.22},"16001005661":{"pct":0,"gv":101.94,"pv":101.94,"bonus":0.0},"61002001928":{"pct":0,"gv":90.97,"pv":90.97,"bonus":0.0},"19001110726":{"pct":0,"gv":92.98,"pv":92.98,"bonus":0.0},"57001007550":{"pct":9,"gv":717.62,"pv":0,"bonus":48.71},"19001052863":{"pct":0,"gv":112.02,"pv":112.02,"bonus":0.0},"60001143908":{"pct":0,"gv":124.57,"pv":124.57,"bonus":0.0},"35001125668":{"pct":6,"gv":418.17,"pv":418.17,"bonus":25.09},"60001121950":{"pct":0,"gv":15.91,"pv":15.91,"bonus":0.0},"54001059576":{"pct":0,"gv":10.26,"pv":10.26,"bonus":0.0},"37401060877":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"35501129611":{"pct":0,"gv":101.97,"pv":101.97,"bonus":0.0},"60001101074":{"pct":0,"gv":66.24,"pv":66.24,"bonus":0.0},"54001054811":{"pct":0,"gv":12.83,"pv":12.83,"bonus":0.0},"20001017244":{"pct":0,"gv":131.26,"pv":131.26,"bonus":0.0},"21001001464":{"pct":0,"gv":103.63,"pv":103.63,"bonus":0.0},"37001048535":{"pct":0,"gv":24.63,"pv":24.63,"bonus":0.0},"38001047389":{"pct":0,"gv":14.46,"pv":14.46,"bonus":0.0},"35001121278":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"11001004319":{"pct":0,"gv":98.95,"pv":98.95,"bonus":0.0},"61005001554":{"pct":0,"gv":49.78,"pv":49.78,"bonus":0.0},"60001146143":{"pct":0,"gv":99.31,"pv":99.31,"bonus":0.0},"38001024304":{"pct":3,"gv":273.21,"pv":94.93,"bonus":8.2},"56001004677":{"pct":0,"gv":24.12,"pv":24.12,"bonus":0.0},"13001041654":{"pct":0,"gv":41.05,"pv":41.05,"bonus":0.0},"59001103933":{"pct":3,"gv":225.95,"pv":225.95,"bonus":6.78},"31001020746":{"pct":0,"gv":91.3,"pv":91.3,"bonus":0.0},"01028006550":{"pct":3,"gv":203.27,"pv":0,"bonus":0.0},"01020001450":{"pct":18,"gv":2809.78,"pv":0,"bonus":336.2},"01013022201":{"pct":3,"gv":334.68,"pv":0,"bonus":10.04},"16001029913":{"pct":0,"gv":10.77,"pv":10.77,"bonus":0.0},"13001045574":{"pct":25,"gv":12075.25,"pv":141.94,"bonus":84.88},"14001002876":{"pct":0,"gv":188.58,"pv":99.97,"bonus":0.0},"62004021963":{"pct":0,"gv":198.58,"pv":198.58,"bonus":0.0},"01031007177":{"pct":12,"gv":1399.96,"pv":0,"bonus":85.9},"61002011418":{"pct":0,"gv":90.8,"pv":90.8,"bonus":0.0},"18001050993":{"pct":9,"gv":654.07,"pv":654.07,"bonus":58.87},"36001049158":{"pct":0,"gv":46.19,"pv":46.19,"bonus":0.0},"61007001952":{"pct":0,"gv":162.93,"pv":162.93,"bonus":0.0},"31001041860":{"pct":0,"gv":37.32,"pv":37.32,"bonus":0.0},"37001056299":{"pct":0,"gv":98.97,"pv":98.97,"bonus":0.0},"58001007930":{"pct":0,"gv":71.77,"pv":71.77,"bonus":0.0},"57001060398":{"pct":0,"gv":10.26,"pv":10.26,"bonus":0.0},"45401038926":{"pct":0,"gv":90.96,"pv":90.96,"bonus":0.0},"53001057135":{"pct":0,"gv":51.97,"pv":51.97,"bonus":0.0},"26001010427":{"pct":0,"gv":97.95,"pv":97.95,"bonus":0.0},"53001030755":{"pct":0,"gv":44.79,"pv":44.79,"bonus":0.0},"54001042904":{"pct":0,"gv":192.6,"pv":192.6,"bonus":0.0},"1023000054666":{"pct":22,"gv":4620.69,"pv":0,"bonus":42.61},"29001037893":{"pct":3,"gv":346.42,"pv":346.42,"bonus":10.39},"47001031136":{"pct":15,"gv":2095.16,"pv":1317.31,"bonus":302.69},"29001031602":{"pct":0,"gv":153.33,"pv":60.03,"bonus":0.0},"62006034892":{"pct":3,"gv":295.95,"pv":295.95,"bonus":8.88},"35701130619":{"pct":9,"gv":791.85,"pv":579.74,"bonus":71.27},"47001039017":{"pct":0,"gv":34.71,"pv":34.71,"bonus":0.0},"60001048311":{"pct":0,"gv":92.13,"pv":92.13,"bonus":0.0},"21001034783":{"pct":0,"gv":92.63,"pv":92.63,"bonus":0.0},"56001021622":{"pct":0,"gv":139.96,"pv":139.96,"bonus":0.0},"54001019365":{"pct":15,"gv":1863.95,"pv":261.19,"bonus":270.3},"57001056294":{"pct":0,"gv":75.58,"pv":75.58,"bonus":0.0},"61001049080":{"pct":0,"gv":138.62,"pv":138.62,"bonus":0.0},"59003003092":{"pct":0,"gv":106.63,"pv":106.63,"bonus":0.0},"59001107141":{"pct":0,"gv":17.33,"pv":17.33,"bonus":0.0},"33001057917":{"pct":0,"gv":188.1,"pv":41.05,"bonus":0.0},"55001029219":{"pct":3,"gv":255.22,"pv":0,"bonus":0.62},"17001019366":{"pct":0,"gv":113.96,"pv":113.96,"bonus":0.0},"59001065125":{"pct":3,"gv":291.8,"pv":0,"bonus":0.0},"60001039661":{"pct":9,"gv":790.91,"pv":555.64,"bonus":64.12},"53001054909":{"pct":6,"gv":440.22,"pv":167.29,"bonus":26.41},"35001112359":{"pct":3,"gv":291.8,"pv":124.57,"bonus":8.75},"25001019942":{"pct":0,"gv":132.61,"pv":132.61,"bonus":0.0},"47001040385":{"pct":3,"gv":336.06,"pv":336.06,"bonus":10.08},"16001001552":{"pct":6,"gv":406.66,"pv":0,"bonus":0.0},"59001097349":{"pct":0,"gv":97.96,"pv":97.96,"bonus":0.0},"43001008982":{"pct":0,"gv":0.17,"pv":0.17,"bonus":0.0},"16001010284":{"pct":0,"gv":50.57,"pv":50.57,"bonus":0.0},"20001051516":{"pct":3,"gv":241.89,"pv":241.89,"bonus":7.26},"16001004388":{"pct":22,"gv":4345.85,"pv":0,"bonus":420.15},"29001035817":{"pct":3,"gv":224.04,"pv":224.04,"bonus":6.72},"48001025092":{"pct":0,"gv":6.67,"pv":6.67,"bonus":0.0},"59002006878":{"pct":9,"gv":611.28,"pv":198.91,"bonus":55.02},"61004040197":{"pct":0,"gv":127.91,"pv":127.91,"bonus":0.0},"01005008253":{"pct":3,"gv":230.28,"pv":0,"bonus":0.81},"20601074337":{"pct":0,"gv":10.26,"pv":10.26,"bonus":0.0},"57001001505":{"pct":0,"gv":128.27,"pv":128.27,"bonus":0.0},"36401054477":{"pct":0,"gv":169.66,"pv":169.66,"bonus":0.0},"20001066556":{"pct":3,"gv":245.42,"pv":96.95,"bonus":7.36},"23001009031":{"pct":0,"gv":169.28,"pv":169.28,"bonus":0.0},"43001034623":{"pct":0,"gv":91.96,"pv":91.96,"bonus":0.0},"01013030609":{"pct":18,"gv":2934.1,"pv":0,"bonus":200.89},"61001071211":{"pct":0,"gv":17.95,"pv":17.95,"bonus":0.0},"61006021495":{"pct":12,"gv":1342.16,"pv":293.56,"bonus":154.91},"18001059065":{"pct":0,"gv":93.3,"pv":93.3,"bonus":0.0},"53001061744":{"pct":25,"gv":8543.73,"pv":226.7,"bonus":1398.47},"35601135246":{"pct":6,"gv":483.95,"pv":266.08,"bonus":29.04},"59001098980":{"pct":9,"gv":673.94,"pv":552.94,"bonus":60.65},"29001005698":{"pct":0,"gv":93.27,"pv":93.27,"bonus":0.0},"43001043197":{"pct":3,"gv":255.22,"pv":0,"bonus":0.0},"35001026550":{"pct":9,"gv":616.5,"pv":616.5,"bonus":55.48},"21001035745":{"pct":0,"gv":41.21,"pv":41.21,"bonus":0.0},"19901115404":{"pct":0,"gv":41.99,"pv":41.99,"bonus":0.0},"38001006325":{"pct":0,"gv":178.28,"pv":178.28,"bonus":0.0},"31001056549":{"pct":3,"gv":223.61,"pv":175.96,"bonus":6.71},"47001015889":{"pct":0,"gv":32.48,"pv":32.48,"bonus":0.0},"22001019697":{"pct":0,"gv":99.95,"pv":99.95,"bonus":0.0},"56001020711":{"pct":0,"gv":52.95,"pv":52.95,"bonus":0.0},"54001045564":{"pct":3,"gv":201.24,"pv":201.24,"bonus":6.04},"33001070262":{"pct":0,"gv":194.92,"pv":194.92,"bonus":0.0},"11001008211":{"pct":0,"gv":12.31,"pv":12.31,"bonus":0.0},"62003002324":{"pct":0,"gv":47.21,"pv":47.21,"bonus":0.0},"18001059929":{"pct":0,"gv":125.28,"pv":125.28,"bonus":0.0},"53001015250":{"pct":0,"gv":27.71,"pv":27.71,"bonus":0.0},"59001025170":{"pct":0,"gv":192.62,"pv":192.62,"bonus":0.0},"33001013645":{"pct":0,"gv":34.2,"pv":34.2,"bonus":0.0},"43001039928":{"pct":0,"gv":184.91,"pv":184.91,"bonus":0.0},"45001030038":{"pct":0,"gv":98.97,"pv":98.97,"bonus":0.0},"60001158381":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"11001022731":{"pct":0,"gv":186.27,"pv":186.27,"bonus":0.0},"47001003120":{"pct":0,"gv":127.28,"pv":127.28,"bonus":0.0},"58001030669":{"pct":18,"gv":2269.58,"pv":101.63,"bonus":123.6},"47001034853":{"pct":3,"gv":259.57,"pv":0,"bonus":0.0},"57001034740":{"pct":0,"gv":25.32,"pv":25.32,"bonus":0.0},"60001005720":{"pct":0,"gv":158.07,"pv":158.07,"bonus":0.0},"11001021744":{"pct":0,"gv":97.63,"pv":97.63,"bonus":0.0},"60003010053":{"pct":0,"gv":179.73,"pv":179.73,"bonus":0.0},"35001079938":{"pct":0,"gv":91.96,"pv":91.96,"bonus":0.0},"18001062959":{"pct":0,"gv":18.66,"pv":18.66,"bonus":0.0},"61003000448":{"pct":0,"gv":137.94,"pv":137.94,"bonus":0.0},"60003012598":{"pct":0,"gv":105.61,"pv":105.61,"bonus":0.0},"01024040572":{"pct":25,"gv":54208.01,"pv":0,"bonus":0.0},"31001010746":{"pct":0,"gv":21.55,"pv":21.55,"bonus":0.0},"51001002714":{"pct":0,"gv":96.3,"pv":96.3,"bonus":0.0},"27001007876":{"pct":0,"gv":65.31,"pv":65.31,"bonus":0.0},"11001029222":{"pct":0,"gv":30.76,"pv":30.76,"bonus":0.0},"47001038842":{"pct":0,"gv":67.73,"pv":67.73,"bonus":0.0},"13001012188":{"pct":0,"gv":43.75,"pv":43.75,"bonus":0.0},"29001005768":{"pct":6,"gv":453.35,"pv":143.75,"bonus":27.2},"18001034007":{"pct":0,"gv":117.95,"pv":117.95,"bonus":0.0},"54001036017":{"pct":6,"gv":445.65,"pv":232.02,"bonus":26.74},"33001062601":{"pct":0,"gv":85.23,"pv":74.95,"bonus":0.0},"43001035491":{"pct":0,"gv":128.99,"pv":94.28,"bonus":0.0},"42001023532":{"pct":0,"gv":41.21,"pv":41.21,"bonus":0.0},"37001059464":{"pct":0,"gv":17.99,"pv":17.99,"bonus":0.0},"35001099213":{"pct":0,"gv":108.96,"pv":108.96,"bonus":0.0},"47001005780":{"pct":3,"gv":216.36,"pv":216.36,"bonus":6.49},"62709008851":{"pct":3,"gv":331.03,"pv":331.03,"bonus":9.93},"60001041636":{"pct":6,"gv":406.66,"pv":99.61,"bonus":18.36},"15001011236":{"pct":0,"gv":169.95,"pv":169.95,"bonus":0.0},"54001022284":{"pct":0,"gv":190.85,"pv":190.85,"bonus":0.0},"57001035715":{"pct":0,"gv":145.93,"pv":145.93,"bonus":0.0},"14001020092":{"pct":3,"gv":388.16,"pv":0,"bonus":3.73},"33001076038":{"pct":0,"gv":121.14,"pv":65.75,"bonus":0.0},"36001048793":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"61006015495":{"pct":0,"gv":124.57,"pv":124.57,"bonus":0.0},"18001067618":{"pct":0,"gv":98.95,"pv":98.95,"bonus":0.0},"54201063113":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"13001003703":{"pct":0,"gv":60.88,"pv":60.88,"bonus":0.0},"54001010906":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"39001006553":{"pct":0,"gv":140.59,"pv":140.59,"bonus":0.0},"61004011990":{"pct":0,"gv":21.03,"pv":21.03,"bonus":0.0},"61001036959":{"pct":0,"gv":94.98,"pv":94.98,"bonus":0.0},"18001033010":{"pct":0,"gv":185.24,"pv":185.24,"bonus":0.0},"10001065132":{"pct":0,"gv":168.63,"pv":168.63,"bonus":0.0},"57001000961":{"pct":0,"gv":12.31,"pv":12.31,"bonus":0.0},"51001010372":{"pct":0,"gv":168.93,"pv":168.93,"bonus":0.0},"13001003021":{"pct":0,"gv":91.29,"pv":91.29,"bonus":0.0},"51001001507":{"pct":0,"gv":91.63,"pv":91.63,"bonus":0.0},"61004060930":{"pct":0,"gv":127.17,"pv":92.97,"bonus":0.0},"61004048723":{"pct":6,"gv":415.18,"pv":0,"bonus":0.0},"41001028797":{"pct":15,"gv":1419.34,"pv":1315.05,"bonus":212.9},"10001004040":{"pct":3,"gv":269.91,"pv":269.91,"bonus":8.1},"13001013058":{"pct":0,"gv":92.73,"pv":92.73,"bonus":0.0},"24001008067":{"pct":25,"gv":5965.75,"pv":0,"bonus":0.0},"18001013323":{"pct":0,"gv":62.73,"pv":62.73,"bonus":0.0},"19001004660":{"pct":0,"gv":128.47,"pv":128.47,"bonus":0.0},"54001058223":{"pct":12,"gv":902.06,"pv":766.11,"bonus":108.25},"29001012857":{"pct":0,"gv":93.3,"pv":93.3,"bonus":0.0},"19001098236":{"pct":3,"gv":207.97,"pv":207.97,"bonus":6.24},"19001028838":{"pct":9,"gv":791.14,"pv":209.58,"bonus":62.32},"37001038696":{"pct":3,"gv":253.7,"pv":239.85,"bonus":7.61},"61009011286":{"pct":0,"gv":50.73,"pv":50.73,"bonus":0.0},"60001076909":{"pct":0,"gv":92.61,"pv":92.61,"bonus":0.0},"60901161982":{"pct":0,"gv":147.28,"pv":147.28,"bonus":0.0},"62001011238":{"pct":0,"gv":143.33,"pv":143.33,"bonus":0.0},"21001042252":{"pct":3,"gv":320.53,"pv":320.53,"bonus":9.62},"19001080605":{"pct":12,"gv":1347.62,"pv":0,"bonus":80.58},"33001066802":{"pct":3,"gv":205.59,"pv":205.59,"bonus":6.17},"40001018899":{"pct":0,"gv":94.21,"pv":94.21,"bonus":0.0},"62005028692":{"pct":0,"gv":44.13,"pv":44.13,"bonus":0.0},"62004027882":{"pct":0,"gv":181.12,"pv":181.12,"bonus":0.0},"61006018899":{"pct":0,"gv":121.67,"pv":121.67,"bonus":0.0},"18001005404":{"pct":0,"gv":13.33,"pv":13.33,"bonus":0.0},"01012019698":{"pct":6,"gv":455.58,"pv":0,"bonus":27.33},"62005008661":{"pct":12,"gv":1046.05,"pv":185.63,"bonus":70.51},"38001011231":{"pct":3,"gv":246.93,"pv":246.93,"bonus":7.41},"60001126826":{"pct":12,"gv":937.67,"pv":400.13,"bonus":86.11},"57001047624":{"pct":0,"gv":110.63,"pv":110.63,"bonus":0.0},"60001085443":{"pct":0,"gv":35.93,"pv":35.93,"bonus":0.0},"16001002742":{"pct":0,"gv":93.3,"pv":93.3,"bonus":0.0},"10001043348":{"pct":0,"gv":106.28,"pv":106.28,"bonus":0.0},"39001004877":{"pct":0,"gv":91.97,"pv":91.97,"bonus":0.0},"60001093652":{"pct":0,"gv":127.47,"pv":127.47,"bonus":0.0},"61009007211":{"pct":0,"gv":98.63,"pv":98.63,"bonus":0.0},"55001018039":{"pct":0,"gv":96.63,"pv":96.63,"bonus":0.0},"61006016941":{"pct":0,"gv":107.98,"pv":107.98,"bonus":0.0},"01019049803":{"pct":12,"gv":1380.16,"pv":0,"bonus":0.0},"41001003590":{"pct":0,"gv":27.71,"pv":27.71,"bonus":0.0},"38001024469":{"pct":0,"gv":124.59,"pv":124.59,"bonus":0.0},"59005000300":{"pct":0,"gv":30.28,"pv":30.28,"bonus":0.0},"54001055122":{"pct":0,"gv":124.34,"pv":124.34,"bonus":0.0},"62004009134":{"pct":6,"gv":497.91,"pv":393.19,"bonus":29.87},"59001028216":{"pct":0,"gv":93.65,"pv":93.65,"bonus":0.0},"31001019013":{"pct":3,"gv":260.55,"pv":260.55,"bonus":7.82},"62007015557":{"pct":9,"gv":689.8,"pv":231.42,"bonus":54.83},"13001057880":{"pct":0,"gv":107.12,"pv":107.12,"bonus":0.0},"43001036776":{"pct":0,"gv":95.3,"pv":95.3,"bonus":0.0},"60001144385":{"pct":15,"gv":1631.37,"pv":1631.37,"bonus":244.71},"13001053054":{"pct":0,"gv":92.13,"pv":92.13,"bonus":0.0},"54001024593":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"53001056155":{"pct":0,"gv":128.42,"pv":128.42,"bonus":0.0},"53001053230":{"pct":0,"gv":17.96,"pv":17.96,"bonus":0.0},"61004070932":{"pct":0,"gv":98.64,"pv":98.64,"bonus":0.0},"59001069369":{"pct":0,"gv":162.27,"pv":162.27,"bonus":0.0},"20001028128":{"pct":0,"gv":94.29,"pv":94.29,"bonus":0.0},"20001015982":{"pct":3,"gv":262.22,"pv":262.22,"bonus":7.87},"56001025138":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"25001044726":{"pct":0,"gv":137.27,"pv":137.27,"bonus":0.0},"61007003200":{"pct":0,"gv":135.8,"pv":135.8,"bonus":0.0},"29001038510":{"pct":0,"gv":172.37,"pv":172.37,"bonus":0.0},"13001006747":{"pct":25,"gv":8443.41,"pv":134.95,"bonus":697.95},"61006071841":{"pct":3,"gv":259.57,"pv":241.58,"bonus":7.79},"60001157465":{"pct":0,"gv":7.37,"pv":7.37,"bonus":0.0},"54001040815":{"pct":0,"gv":117.65,"pv":117.65,"bonus":0.0},"56001016129":{"pct":0,"gv":102.62,"pv":102.62,"bonus":0.0},"45950000264":{"pct":3,"gv":224.27,"pv":125.3,"bonus":6.73},"55001016583":{"pct":3,"gv":344.55,"pv":120.26,"bonus":4.09},"43001034033":{"pct":0,"gv":27.87,"pv":27.87,"bonus":0.0},"20001067216":{"pct":0,"gv":56.34,"pv":56.34,"bonus":0.0},"62002004381":{"pct":3,"gv":278.82,"pv":0,"bonus":8.36},"38001001922":{"pct":0,"gv":109.28,"pv":109.28,"bonus":0.0},"31001039972":{"pct":0,"gv":41.57,"pv":41.57,"bonus":0.0},"24001007857":{"pct":3,"gv":203.27,"pv":203.27,"bonus":6.1},"62006055138":{"pct":3,"gv":204.95,"pv":204.95,"bonus":6.15},"35950000251":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"61009020712":{"pct":9,"gv":671.06,"pv":671.06,"bonus":60.4},"62007015704":{"pct":0,"gv":41.57,"pv":41.57,"bonus":0.0},"13001066812":{"pct":0,"gv":12.31,"pv":12.31,"bonus":0.0},"60001077795":{"pct":0,"gv":123.95,"pv":123.95,"bonus":0.0},"45001002947":{"pct":9,"gv":616.5,"pv":0,"bonus":0.0},"39001034401":{"pct":0,"gv":156.95,"pv":156.95,"bonus":0.0},"57001056691":{"pct":0,"gv":187.25,"pv":187.25,"bonus":0.0},"10001040394":{"pct":0,"gv":97.62,"pv":97.62,"bonus":0.0},"36001046301":{"pct":0,"gv":28.74,"pv":28.74,"bonus":0.0},"36001036800":{"pct":0,"gv":158.59,"pv":158.59,"bonus":0.0},"35001048327":{"pct":0,"gv":97.3,"pv":97.3,"bonus":0.0},"59001115298":{"pct":0,"gv":109.97,"pv":109.97,"bonus":0.0},"65002007326":{"pct":0,"gv":22.65,"pv":22.65,"bonus":0.0},"404445249":{"pct":25,"gv":67997.13,"pv":0,"bonus":809.06},"29001005572":{"pct":25,"gv":5201.05,"pv":295.7,"bonus":845.48},"58001030984":{"pct":0,"gv":41.72,"pv":41.72,"bonus":0.0},"59002000724":{"pct":6,"gv":408.71,"pv":408.71,"bonus":24.52},"57001001340":{"pct":0,"gv":120.62,"pv":120.62,"bonus":0.0},"45001007465":{"pct":0,"gv":72.76,"pv":72.76,"bonus":0.0},"29001024103":{"pct":0,"gv":7.69,"pv":7.69,"bonus":0.0},"61004008586":{"pct":0,"gv":35.99,"pv":35.99,"bonus":0.0},"54001041765":{"pct":0,"gv":168.61,"pv":168.61,"bonus":0.0},"60001026845":{"pct":25,"gv":11735.72,"pv":231.25,"bonus":595.64},"39001034367":{"pct":12,"gv":1011.9,"pv":167.56,"bonus":45.44},"62109012995":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"48001012384":{"pct":12,"gv":1380.16,"pv":41.59,"bonus":34.39},"10001006672":{"pct":6,"gv":553.27,"pv":102.63,"bonus":33.2},"54001054796":{"pct":15,"gv":1960.32,"pv":393.78,"bonus":284.99},"62005018346":{"pct":0,"gv":129.29,"pv":129.29,"bonus":0.0},"15001025432":{"pct":0,"gv":18.47,"pv":18.47,"bonus":0.0},"61010005518":{"pct":0,"gv":96.63,"pv":96.63,"bonus":0.0},"10001027792":{"pct":0,"gv":88.61,"pv":88.61,"bonus":0.0},"37001017967":{"pct":0,"gv":199.25,"pv":199.25,"bonus":0.0},"24001011135":{"pct":0,"gv":168.92,"pv":168.92,"bonus":0.0},"13001029750":{"pct":0,"gv":12.83,"pv":12.83,"bonus":0.0},"16001022439":{"pct":22,"gv":4396.42,"pv":0,"bonus":11.13},"61002011817":{"pct":3,"gv":305.55,"pv":305.55,"bonus":9.17},"51001026041":{"pct":0,"gv":90.95,"pv":90.95,"bonus":0.0},"10001018876":{"pct":3,"gv":386.57,"pv":257.95,"bonus":11.6},"62007016444":{"pct":9,"gv":810.35,"pv":0,"bonus":0.0},"22001018866":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"22001022821":{"pct":0,"gv":128.14,"pv":128.14,"bonus":0.0},"53001050663":{"pct":15,"gv":1624.05,"pv":229.62,"bonus":120.18},"58001032540":{"pct":6,"gv":415.18,"pv":415.18,"bonus":24.91},"17001031558":{"pct":0,"gv":140.27,"pv":140.27,"bonus":0.0},"29001010481":{"pct":0,"gv":104.72,"pv":104.72,"bonus":0.0},"19001094246":{"pct":3,"gv":234.7,"pv":234.7,"bonus":7.04},"60001076515":{"pct":0,"gv":155.63,"pv":155.63,"bonus":0.0},"60002012903":{"pct":3,"gv":363.46,"pv":98.62,"bonus":10.9},"27001003520":{"pct":18,"gv":2572.04,"pv":297.85,"bonus":179.01},"60001041599":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"15001023201":{"pct":0,"gv":124.95,"pv":124.95,"bonus":0.0},"57001051873":{"pct":3,"gv":203.28,"pv":203.28,"bonus":6.1},"12001052002":{"pct":0,"gv":181.26,"pv":181.26,"bonus":0.0},"61006005188":{"pct":0,"gv":17.99,"pv":17.99,"bonus":0.0},"33001082121":{"pct":0,"gv":10.28,"pv":10.28,"bonus":0.0},"61009030684":{"pct":0,"gv":108.64,"pv":108.64,"bonus":0.0},"35001108100":{"pct":0,"gv":32.48,"pv":32.48,"bonus":0.0},"57001017482":{"pct":0,"gv":188.57,"pv":188.57,"bonus":0.0},"21001011835":{"pct":0,"gv":161.27,"pv":161.27,"bonus":0.0},"57701062566":{"pct":0,"gv":164.98,"pv":164.98,"bonus":0.0},"40001033282":{"pct":0,"gv":167.47,"pv":167.47,"bonus":0.0},"61010008376":{"pct":3,"gv":256.22,"pv":256.22,"bonus":7.69},"17001001999":{"pct":0,"gv":90.63,"pv":90.63,"bonus":0.0},"31001054133":{"pct":0,"gv":47.65,"pv":47.65,"bonus":0.0},"43001041315":{"pct":6,"gv":408.71,"pv":0,"bonus":0.0},"61006077652":{"pct":12,"gv":1399.96,"pv":0,"bonus":0.0},"61006069985":{"pct":0,"gv":97.29,"pv":97.29,"bonus":0.0},"20001049233":{"pct":25,"gv":54208.01,"pv":0,"bonus":0.0},"01007013690":{"pct":18,"gv":3010.72,"pv":0,"bonus":306.0},"13001063120":{"pct":6,"gv":429.07,"pv":225.52,"bonus":25.74},"18001021915":{"pct":3,"gv":235.27,"pv":235.27,"bonus":7.06},"29001026802":{"pct":0,"gv":19.49,"pv":19.49,"bonus":0.0},"14001023531":{"pct":0,"gv":177.27,"pv":177.27,"bonus":0.0},"62902019008":{"pct":0,"gv":57.99,"pv":57.99,"bonus":0.0},"61001043416":{"pct":0,"gv":41.04,"pv":41.04,"bonus":0.0},"47001005912":{"pct":12,"gv":935.71,"pv":108.12,"bonus":94.01},"45001002772":{"pct":0,"gv":93.97,"pv":93.97,"bonus":0.0},"53001028234":{"pct":0,"gv":104.29,"pv":104.29,"bonus":0.0},"38001021111":{"pct":3,"gv":385.88,"pv":385.88,"bonus":11.58},"37001054563":{"pct":3,"gv":239.28,"pv":140.31,"bonus":7.18},"13001067861":{"pct":0,"gv":142.28,"pv":142.28,"bonus":0.0},"23001004233":{"pct":0,"gv":28.37,"pv":28.37,"bonus":0.0},"13001041063":{"pct":0,"gv":190.62,"pv":190.62,"bonus":0.0},"24001027438":{"pct":0,"gv":105.61,"pv":105.61,"bonus":0.0},"62006040225":{"pct":0,"gv":92.3,"pv":92.3,"bonus":0.0},"16001003035":{"pct":0,"gv":50.74,"pv":50.74,"bonus":0.0},"51001014043":{"pct":9,"gv":863.37,"pv":247.58,"bonus":70.3},"60001010358":{"pct":0,"gv":14.37,"pv":14.37,"bonus":0.0},"60001124966":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"21001003428":{"pct":0,"gv":93.14,"pv":93.14,"bonus":0.0},"33001076050":{"pct":0,"gv":35.85,"pv":35.85,"bonus":0.0},"61010017295":{"pct":9,"gv":800.56,"pv":190.74,"bonus":72.05},"53001030787":{"pct":6,"gv":548.79,"pv":455.52,"bonus":32.93},"53001058970":{"pct":0,"gv":160.74,"pv":160.74,"bonus":0.0},"38001021859":{"pct":0,"gv":150.86,"pv":150.86,"bonus":0.0},"22001007207":{"pct":3,"gv":282.89,"pv":282.89,"bonus":8.49},"35001094799":{"pct":3,"gv":208.21,"pv":159.91,"bonus":6.25},"14001010311":{"pct":9,"gv":810.35,"pv":0,"bonus":0.0},"62006029100":{"pct":0,"gv":127.3,"pv":127.3,"bonus":0.0},"59001083272":{"pct":3,"gv":273.57,"pv":273.57,"bonus":8.21},"54001042507":{"pct":0,"gv":95.98,"pv":95.98,"bonus":0.0},"53001000602":{"pct":0,"gv":129.61,"pv":129.61,"bonus":0.0},"41501031567":{"pct":0,"gv":121.0,"pv":121.0,"bonus":0.0},"51001031008":{"pct":0,"gv":94.97,"pv":94.97,"bonus":0.0},"24001013564":{"pct":0,"gv":98.29,"pv":98.29,"bonus":0.0},"13001063315":{"pct":0,"gv":187.69,"pv":187.69,"bonus":0.0},"62002007115":{"pct":0,"gv":90.29,"pv":90.29,"bonus":0.0},"01027039949":{"pct":25,"gv":12830.7,"pv":0,"bonus":625.49},"54001038133":{"pct":0,"gv":9.75,"pv":9.75,"bonus":0.0},"12001064454":{"pct":0,"gv":94.61,"pv":94.61,"bonus":0.0},"20001013646":{"pct":0,"gv":94.95,"pv":94.95,"bonus":0.0},"60001038433":{"pct":0,"gv":176.59,"pv":176.59,"bonus":0.0},"18001068628":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"14001027268":{"pct":9,"gv":810.35,"pv":0,"bonus":61.29},"59001109450":{"pct":3,"gv":315.85,"pv":315.85,"bonus":9.48},"47001039351":{"pct":25,"gv":5728.51,"pv":512.27,"bonus":966.5},"62002006058":{"pct":0,"gv":13.85,"pv":13.85,"bonus":0.0},"13001045467":{"pct":0,"gv":197.59,"pv":197.59,"bonus":0.0},"35001107058":{"pct":0,"gv":163.87,"pv":163.87,"bonus":0.0},"59101136076":{"pct":6,"gv":445.81,"pv":129.96,"bonus":17.27},"29001009984":{"pct":0,"gv":187.26,"pv":187.26,"bonus":0.0},"25001030460":{"pct":0,"gv":34.37,"pv":34.37,"bonus":0.0},"62005013900":{"pct":0,"gv":101.3,"pv":101.3,"bonus":0.0},"13001069491":{"pct":6,"gv":423.04,"pv":423.04,"bonus":25.38},"28001062192":{"pct":3,"gv":308.86,"pv":308.86,"bonus":9.27},"50650000005":{"pct":0,"gv":71.32,"pv":71.32,"bonus":0.0},"49001015415":{"pct":0,"gv":69.27,"pv":69.27,"bonus":0.0},"56001006199":{"pct":0,"gv":10.28,"pv":10.28,"bonus":0.0},"18001022396":{"pct":3,"gv":386.29,"pv":246.33,"bonus":11.59},"01019088664":{"pct":15,"gv":2097.76,"pv":0,"bonus":128.43},"61006010836":{"pct":22,"gv":3984.87,"pv":414.51,"bonus":681.09},"54001009952":{"pct":0,"gv":22.06,"pv":22.06,"bonus":0.0},"35001054437":{"pct":0,"gv":125.91,"pv":125.91,"bonus":0.0},"62006008823":{"pct":15,"gv":1496.89,"pv":230.93,"bonus":106.05},"25001019813":{"pct":0,"gv":91.58,"pv":91.58,"bonus":0.0},"19001085290":{"pct":0,"gv":66.73,"pv":66.73,"bonus":0.0},"36101058622":{"pct":0,"gv":27.01,"pv":27.01,"bonus":0.0},"59001074671":{"pct":0,"gv":177.28,"pv":177.28,"bonus":0.0},"01019085305":{"pct":9,"gv":640.27,"pv":0,"bonus":38.42},"29301041264":{"pct":15,"gv":2199.27,"pv":341.63,"bonus":185.05},"43001017646":{"pct":0,"gv":139.06,"pv":139.06,"bonus":0.0},"47001017973":{"pct":0,"gv":102.63,"pv":102.63,"bonus":0.0},"59001006046":{"pct":3,"gv":238.93,"pv":238.93,"bonus":7.17},"59001113907":{"pct":0,"gv":64.65,"pv":64.65,"bonus":0.0},"59001117418":{"pct":0,"gv":102.29,"pv":102.29,"bonus":0.0},"47001029294":{"pct":3,"gv":301.99,"pv":301.99,"bonus":9.06},"61701090977":{"pct":0,"gv":20.52,"pv":20.52,"bonus":0.0},"62006062288":{"pct":0,"gv":96.63,"pv":96.63,"bonus":0.0},"60002007492":{"pct":0,"gv":97.32,"pv":97.32,"bonus":0.0},"59001117873":{"pct":3,"gv":395.17,"pv":297.21,"bonus":11.86},"13001069422":{"pct":0,"gv":54.31,"pv":54.31,"bonus":0.0},"37001011463":{"pct":25,"gv":8525.28,"pv":535.53,"bonus":669.56},"14001028500":{"pct":3,"gv":263.72,"pv":263.72,"bonus":7.91},"59001025985":{"pct":3,"gv":309.65,"pv":147.38,"bonus":9.29},"61009006374":{"pct":18,"gv":3360.3,"pv":347.76,"bonus":316.79},"35001041844":{"pct":0,"gv":107.66,"pv":107.66,"bonus":0.0},"56001023697":{"pct":12,"gv":1163.04,"pv":136.97,"bonus":78.46},"20001039473":{"pct":25,"gv":54208.01,"pv":0,"bonus":0.0},"55001020674":{"pct":12,"gv":1024.24,"pv":982.67,"bonus":122.91},"26001015477":{"pct":0,"gv":154.54,"pv":56.59,"bonus":0.0},"43001040641":{"pct":0,"gv":104.62,"pv":104.62,"bonus":0.0},"24001041422":{"pct":3,"gv":306.74,"pv":91.61,"bonus":9.2},"22001005506":{"pct":0,"gv":119.79,"pv":119.79,"bonus":0.0},"23001010856":{"pct":0,"gv":51.31,"pv":51.31,"bonus":0.0},"61008002199":{"pct":0,"gv":115.28,"pv":115.28,"bonus":0.0},"61004018790":{"pct":0,"gv":102.96,"pv":102.96,"bonus":0.0},"62001017305":{"pct":0,"gv":128.62,"pv":128.62,"bonus":0.0},"60001150266":{"pct":3,"gv":342.11,"pv":17.99,"bonus":0.54},"61010019596":{"pct":0,"gv":36.93,"pv":36.93,"bonus":0.0},"54001014782":{"pct":3,"gv":324.12,"pv":203.12,"bonus":9.72},"16301034179":{"pct":0,"gv":125.69,"pv":125.69,"bonus":0.0},"18001070689":{"pct":0,"gv":129.96,"pv":129.96,"bonus":0.0},"61002008566":{"pct":0,"gv":98.63,"pv":98.63,"bonus":0.0},"01011084397":{"pct":3,"gv":224.27,"pv":0,"bonus":0.0},"59001125862":{"pct":0,"gv":34.02,"pv":34.02,"bonus":0.0},"59001082598":{"pct":0,"gv":97.97,"pv":97.97,"bonus":0.0},"19001077956":{"pct":0,"gv":124.51,"pv":124.51,"bonus":0.0},"02001005218":{"pct":3,"gv":389.79,"pv":0,"bonus":3.21},"43001004293":{"pct":0,"gv":32.47,"pv":32.47,"bonus":0.0},"43001022077":{"pct":0,"gv":131.02,"pv":131.02,"bonus":0.0},"19001099984":{"pct":3,"gv":220.03,"pv":220.03,"bonus":6.6}};
+const ACTIVE = {"13001064908":114.97,"13001058322":973.9,"1027039949":137.14,"13001045574":141.94,"60001026845":231.25,"37001011463":535.53,"13001006747":134.95,"53001061744":226.7,"47001039351":512.27,"59001047299":780.41,"29001005572":295.7,"1020001450":300.08,"61009006374":347.76,"61006010836":414.51,"1013030609":138.6,"1007013690":47.73,"27001003520":297.85,"54001054796":393.78,"1019088664":361.87,"58001030669":101.63,"54001019365":261.19,"29301041264":341.63,"47001031136":1317.31,"53001050663":229.62,"62006008823":230.93,"60001144385":1631.37,"41001028797":1315.05,"48001012384":41.59,"61006021495":293.56,"56001023697":136.97,"1019085303":254.43,"60001126826":400.13,"29601041221":402.82,"2001005218":397.15,"62005008661":185.63,"1013022201":98.17,"39001034367":167.56,"55001020674":982.67,"51001014043":247.58,"1019085305":324.56,"47001005912":108.12,"62402017192":923.32,"54001058223":766.11,"35701130619":579.74,"19001104776":162.67,"59001098980":552.94,"61010017295":190.74,"19001028838":209.58,"60001039661":555.64,"19701113004":125.95,"62007015557":231.42,"1012019698":227.95,"18001055418":678.97,"61009020712":671.06,"18001050993":654.07,"1001041493":469.11,"35001026550":616.5,"59002006878":198.91,"35001103759":501.96,"1001080052":363.86,"10001006672":102.63,"53001030787":455.52,"1004011734":529.77,"60001041636":99.61,"62004009134":393.19,"35601135246":266.08,"29001005768":143.75,"59101136076":129.96,"54001036017":232.02,"53001054909":167.29,"13001063120":225.52,"13001069491":423.04,"35001125668":418.17,"58001032540":415.18,"14001002876":99.97,"59002000724":408.71,"1019015355":39.0,"55001016583":120.26,"18001022396":246.33,"59001117873":297.21,"29001035817":224.04,"10001018876":257.95,"38001021111":385.88,"60002012903":98.62,"29001037893":346.42,"60001150266":17.99,"31001000524":339.98,"1028005903":306.79,"47001040385":336.06,"62709008851":331.03,"16001032055":326.67,"54001014782":203.12,"1001099664":321.44,"21001042252":320.53,"1124092797":316.56,"59001109450":315.85,"1030018538":190.53,"59001025985":147.38,"28001062192":308.86,"24001041422":91.61,"61002011817":305.55,"47001029294":301.99,"1027077864":297.82,"62006034892":295.95,"35001112359":124.57,"22001007207":282.89,"1034002833":273.9,"59001083272":273.57,"38001024304":94.93,"4001013488":270.2,"10001004040":269.91,"18001033010":185.24,"14001028500":263.72,"4001001708":263.2,"20001015982":262.22,"31001019013":260.55,"61006071841":241.58,"1023005074":257.98,"61010008376":256.22,"37001038696":239.85,"1027050782":253.04,"38001011231":246.93,"20001066556":96.95,"20001051516":241.89,"37001054563":140.31,"59001006046":238.93,"1028006550":35.47,"62006005752":236.59,"18001021915":235.27,"1311103910":235.25,"19001094246":234.7,"59001103933":225.95,"45950000264":125.3,"31001056549":175.96,"61006006311":223.5,"19001099984":220.03,"1014003847":218.95,"47001005780":216.36,"19001052863":112.02,"35001094799":159.91,"19001098236":207.97,"33001066802":205.59,"62006055138":204.95,"57001051873":203.28,"24001007857":203.27,"54001045564":201.24,"1013030194":199.93,"37001017967":199.25,"62004021963":198.58,"25001037227":197.93,"24001016174":197.93,"13001045467":197.59,"37001026937":196.93,"54001050804":196.25,"33001070262":194.92,"9001024165":194.25,"59001025170":192.62,"54001042904":192.6,"54001022284":190.85,"1019037101":160.29,"13001041063":190.62,"22001005442":190.34,"57001017482":188.57,"33001057917":41.05,"13001063315":187.69,"29001009984":187.26,"57001056691":187.25,"11001022731":186.27,"1011066704":185.26,"43001039928":184.91,"61001058901":183.51,"12001052002":181.26,"62004027882":181.12,"60003010053":179.73,"22001023646":178.87,"38001006325":178.28,"59001074671":177.28,"14001023531":177.27,"60001038433":176.59,"62007003894":174.23,"35001112872":172.98,"29001038510":172.37,"15001011236":169.95,"36401054477":169.66,"19001106336":169.45,"23001009031":169.28,"51001010372":168.93,"24001011135":168.92,"10001065132":168.63,"54001041765":168.61,"60001118712":168.59,"40001033282":167.47,"35001062194":167.23,"57701062566":164.98,"1019008898":164.28,"35001107058":163.87,"61007001952":162.93,"59001069369":162.27,"21001011835":161.27,"1027087400":161.19,"53001058970":160.74,"36001036800":158.59,"2001004627":158.08,"60001005720":158.07,"39001034401":156.95,"60001076515":155.63,"26001015477":56.59,"29001031602":60.03,"38001021859":150.86,"56001021622":139.96,"10001010443":149.44,"1001097297":147.97,"60901161982":147.28,"1011072865":146.61,"57001035715":145.93,"62001011238":143.33,"13001067861":142.28,"39001006553":140.59,"17001031558":140.27,"43001017646":139.06,"61001049080":138.62,"61003000448":137.94,"25001044726":137.27,"1012014230":136.45,"61007003200":135.8,"1011083357":134.31,"47001025209":134.28,"2001017294":133.41,"61006012255":133.05,"25001019942":132.61,"1011096499":132.39,"20001017244":131.26,"43001022077":131.02,"1009008076":130.09,"18001070689":129.96,"53001000602":129.61,"62005018346":129.29,"43001035491":94.28,"1020000704":128.95,"62001017305":128.62,"60001133755":128.49,"19001004660":128.47,"53001056155":128.42,"57001001505":128.27,"22001022821":128.14,"61004040197":127.91,"60001093652":127.47,"62006029100":127.3,"47001003120":127.28,"61004060930":92.97,"35001054437":125.91,"16301034179":125.69,"18001059929":125.28,"15001023201":124.95,"38001024469":124.59,"60001143908":124.57,"61006015495":124.57,"19001077956":124.51,"54001055122":124.34,"60001077795":123.95,"1019037016":123.45,"9001013731":122.81,"61006018899":121.67,"1032001161":121.64,"33001076038":65.75,"41501031567":121.0,"54001026188":121.0,"57001001340":120.62,"22001005506":119.79,"18001034007":117.95,"54001040815":117.65,"61008002199":115.28,"17001019366":113.96,"13201071222":112.26,"57001047624":110.63,"59001115298":109.97,"38001001922":109.28,"35001099213":108.96,"61009030684":108.64,"1020003193":108.63,"61006016941":107.98,"35001041844":107.66,"13001057880":107.12,"10001066634":106.9,"8001005875":106.65,"59003003092":106.63,"10001043348":106.28,"1019031058":105.81,"24001027438":105.61,"60003012598":105.61,"29001010481":104.72,"43001040641":104.62,"1027002731":104.61,"53001028234":104.29,"1027080668":104.29,"1036000959":103.97,"21001001464":103.63,"1027073781":103.31,"61004018790":102.96,"47001017973":102.63,"56001016129":102.62,"1019051827":102.61,"59001117418":102.29,"35501129611":101.97,"16001005661":101.94,"19001101730":101.62,"62005013900":101.3,"40001039499":100.11,"22001019697":99.95,"13001027408":99.64,"1019069163":99.63,"60001146143":99.31,"8001022766":99.26,"45001030038":98.97,"37001056299":98.97,"11001004319":98.95,"18001067618":98.95,"61004070932":98.64,"1008046046":98.64,"61002008566":98.63,"61009007211":98.63,"24001013564":98.29,"59001082598":97.97,"59001097349":97.96,"26001010427":97.95,"11001021744":97.63,"10001040394":97.62,"60002007492":97.32,"35001048327":97.3,"1019013613":97.29,"61006069985":97.29,"60001134445":97.29,"60001102901":96.96,"19001028225":96.96,"62006062288":96.63,"61010005518":96.63,"55001018039":96.63,"1201116449":96.63,"51001002714":96.3,"54001042507":95.98,"43001036776":95.3,"1501127358":95.29,"61001036959":94.98,"51001031008":94.97,"20001013646":94.95,"12001064454":94.61,"60001050213":94.29,"20001028128":94.29,"40001018899":94.21,"45001002772":93.97,"59001028216":93.65,"16001002742":93.3,"29001012857":93.3,"18001059065":93.3,"29001005698":93.27,"21001003428":93.14,"19001110726":92.98,"5001003848":92.8,"13001013058":92.73,"21001034783":92.63,"60001076909":92.61,"62006040225":92.3,"60001048311":92.13,"13001053054":92.13,"39001004877":91.97,"60001043932":91.97,"43001034623":91.96,"35001079938":91.96,"40001000327":91.96,"51001001507":91.63,"25001019813":91.58,"1005018628":91.31,"37001015920":91.3,"31001020746":91.3,"13001003021":91.29,"1019002805":91.29,"29001002855":33.03,"1002003090":90.97,"61002001928":90.97,"45401038926":90.96,"61009031369":90.96,"3001016933":90.96,"51001026041":90.95,"61002011418":90.8,"17001001999":90.63,"62002007115":90.29,"10001027792":88.61,"1019028513":88.29,"33001062601":74.95,"1027081146":83.53,"3001019018":47.61,"43001007733":78.08,"40001034974":77.45,"57001056294":75.58,"1020016092":75.53,"1020014694":74.29,"1030032683":73.89,"36001035375":73.71,"45001007465":72.76,"58001007930":71.77,"50650000005":71.32,"34001008155":70.06,"49001015415":69.27,"1015014084":67.86,"47001038842":67.73,"19001085290":66.73,"60001101074":66.24,"27001007876":65.31,"59001113907":64.65,"1005042789":63.52,"18001013323":62.73,"13001003703":60.88,"1657002720":58.29,"59001120906":58.2,"62902019008":57.99,"20001067216":56.34,"61001032384":56.09,"33001065625":55.39,"1016000139":55.08,"13001069422":54.31,"11001014615":53.97,"62001024445":53.36,"43001034881":53.18,"56001020711":52.95,"53001057135":51.97,"23001010856":51.31,"16001003035":50.74,"61009011286":50.73,"16001010284":50.57,"61005001554":49.78,"35001096565":48.3,"31001054133":47.65,"62003002324":47.21,"36001049158":46.19,"53001030755":44.79,"1027056875":44.39,"62005028692":44.13,"13001012188":43.75,"3001017519":43.61,"1027019578":43.09,"9001027390":43.05,"1001069058":42.84,"19901115404":41.99,"58001030984":41.72,"62007015704":41.57,"31001039972":41.57,"21001035745":41.21,"42001023532":41.21,"1501132384":41.05,"13001041654":41.05,"61001043416":41.04,"1004010739":40.99,"1012026391":40.03,"1001045782":39.49,"1025006309":37.97,"31001041860":37.32,"2001020980":36.95,"61010019596":36.93,"1019087780":36.78,"61004008586":35.99,"60001085443":35.93,"33001076050":35.85,"1001028518":35.41,"47001039017":34.71,"25001030460":34.37,"33001013645":34.2,"59001125862":34.02,"24001047363":33.36,"17001002661":33.33,"35001108100":32.48,"47001015889":32.48,"43001004293":32.47,"1024027039":31.82,"1317059149":31.79,"1012016199":31.12,"19001039671":30.79,"11001029222":30.76,"1034001549":30.37,"59005000300":30.28,"1217059087":29.71,"59101128987":29.07,"1801106988":29.04,"36001046301":28.74,"1014004517":28.74,"1217061039":28.57,"1011073349":28.38,"23001004233":28.37,"43001034033":27.87,"53001015250":27.71,"41001003590":27.71,"1012020018":27.19,"36101058622":27.01,"57001034740":25.32,"1012009246":24.63,"37001048535":24.63,"8001022534":24.62,"56001004677":24.12,"1601107862":24.11,"65002007326":22.65,"1019043111":22.57,"54001009952":22.06,"31001010746":21.55,"1011018201":21.03,"61004011990":21.03,"45001026742":20.53,"61701090977":20.52,"1007001095":20.52,"35001104673":20.52,"36001048793":20.52,"54201063113":20.52,"1701119214":20.52,"60001124966":20.52,"60001041599":20.52,"29001026802":19.49,"59001078193":19.25,"18001062959":18.66,"15001025432":18.47,"37001059464":17.99,"61006005188":17.99,"53001053230":17.96,"61001071211":17.95,"37001052322":17.95,"59001107141":17.33,"1001011103":16.41,"50001000664":15.91,"60001121950":15.91,"5001011673":15.39,"1001081530":14.87,"38001047389":14.46,"60001010358":14.37,"37401060877":13.85,"62109012995":13.85,"56001025138":13.85,"22001018866":13.85,"54001010906":13.85,"35001121278":13.85,"60001158381":13.85,"18001068628":13.85,"54001024593":13.85,"62002006058":13.85,"1013024513":13.85,"35950000251":13.85,"1005027612":13.34,"18001005404":13.33,"13001029750":12.83,"54001054811":12.83,"57001000961":12.31,"11001008211":12.31,"13001066812":12.31,"16001029913":10.77,"33001082121":10.28,"56001006199":10.28,"54001059576":10.26,"57001060398":10.26,"1305048351":10.26,"20601074337":10.26,"1211101532":10.26,"54001038133":9.75,"29001024103":7.69,"1019033149":7.69,"60001157465":7.37,"48001025092":6.67,"43001008982":0.17};
+const API    = '/farmasi_auth/api.php';
+let USERS = {}; // loaded async
+fetch('users_mobile.json').then(r=>r.json()).then(d=>{USERS=d;console.log('USERS loaded:',Object.keys(d).length);}).catch(e=>console.error('USERS load failed',e));
+fetch('search_ext.json').then(r=>r.json()).then(d=>{SEARCH=d;console.log('SEARCH loaded:',d.length);}).catch(e=>console.error('SEARCH load failed',e));
+
+const C={25:"#ffd700",22:"#4dffb8",18:"#4db8ff",15:"#7c6ff7",12:"#ff6b9d",9:"#4dff91",6:"#aaff4d",3:"#ffb74d"};
+const T={25:"მენეჯერი / დირექტორი",22:"ინფლ. 22%",18:"ინფლ. 18%",15:"ინფლ. 15%",12:"ინფლ. 12%",9:"ინფლ. 9%",6:"ინფლ. 6%",3:"ინფლ. 3%",0:"ინფლუენსერი"};
+const TS={25:"მენეჯ.",22:"22%",18:"18%",15:"15%",12:"12%",9:"9%",6:"6%",3:"3%",0:"0%"};
+
+function clr(pid,root){if(root)return"#ff6b9d";const b=BONUS[pid];if(!b)return ACTIVE[pid]?"#888":"#ff4d6b";return C[b.pct]||"#888";}
+function ttl(pct, gv){
+  if(pct === 25 && gv != null){
+    if(gv >= 200000) return "აღმასრ. ბოს-დირექტორი";
+    if(gv >= 150000) return "ბოს დირექტორი";
+    if(gv >= 100000) return "პრეზიდენტი დირექტორი";
+    if(gv >= 80000)  return "ვიცე-პრეზიდენტი დირექტორი";
+    if(gv >= 60000)  return "ბრილიანტის დირექტორი";
+    if(gv >= 40000)  return "ზურმუხტის დირექტორი";
+    if(gv >= 20000)  return "პლატინის დირექტორი";
+    if(gv >= 10000)  return "ოქროს დირექტორი";
+    if(gv >= 5000)   return "დირექტორი";
+    return "მენეჯერი";
+  }
+  return T[pct]||"ინფლუენსერი";
+}
+function tsh(pct){return TS[pct]||"0%";}
+
+function initials(name){
+  if(!name) return '?';
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if(parts.length === 0) return '?';
+  if(parts.length === 1) return parts[0].substring(0,2);
+  return (parts[0][0] || '') + '.' + (parts[1][0] || '');
+}
+
+
+let timerInv=null, timerSec=300;
+function startTimer(){
+  timerSec=300;
+  clearInterval(timerInv);
+  timerInv=setInterval(function(){
+    timerSec--;
+    const m=Math.floor(timerSec/60), s=timerSec%60;
+    document.getElementById('timer-txt').textContent=
+      String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if(timerSec<=0){clearInterval(timerInv);showErr('s2','კოდის ვადა ამოიწურა.');}
+  },1000);
+}
+
+document.querySelectorAll('.otp-d').forEach(function(el,i,arr){
+  el.addEventListener('input',function(e){
+    if(e.target.value&&i<arr.length-1) arr[i+1].focus();
+    if(e.target.value.length>1) e.target.value=e.target.value.slice(-1);
+  });
+  el.addEventListener('keydown',function(e){
+    if(e.key==='Backspace'&&!e.target.value&&i>0) arr[i-1].focus();
+    if(e.key==='Enter') verifyOtp();
+  });
+});
+
+function getOtp(){ return Array.from(document.querySelectorAll('.otp-d')).map(function(e){return e.value;}).join(''); }
+function clearOtp(){ document.querySelectorAll('.otp-d').forEach(function(e){e.value='';}); }
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+function showErr(scr,msg){
+  const el=document.getElementById(scr+'-err');
+  el.textContent=msg; el.style.display='block';
+}
+function hideErr(scr){ document.getElementById(scr+'-err').style.display='none'; }
+function setLoad(scr,on){
+  document.getElementById(scr+'-load').style.display=on?'block':'none';
+  const btn=document.getElementById(scr==='s1'?'send-btn':'verify-btn');
+  if(btn) btn.disabled=on;
+}
+
+async function sendOtp(){
+  const pid=document.getElementById('pid-inp').value.trim();
+  if(!pid){showErr('s1','შეიყვანეთ პირადი ნომერი');return;}
+  hideErr('s1'); setLoad('s1',true);
+  try{
+    const fd=new FormData();
+    fd.append('action','send_otp');
+    fd.append('pid',pid);
+    const r=await fetch(API,{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.status==='ok'){
+      document.getElementById('masked-phone').textContent=d.masked_phone;
+      clearOtp();
+      showScreen('s2');
+      startTimer();
+      setTimeout(function(){document.querySelector('.otp-d').focus();},300);
+    } else {
+      showErr('s1',d.message||'შეცდომა');
+    }
+  } catch(e){
+    showErr('s1','კავშირის შეცდომა.');
+  }
+  setLoad('s1',false);
+}
+
+async function verifyOtp(){
+  const otp=getOtp();
+  if(otp.length<6){showErr('s2','შეიყვანეთ 6-ნიშნა კოდი');return;}
+  hideErr('s2'); setLoad('s2',true);
+  try{
+    const fd=new FormData();
+    fd.append('action','verify_otp');
+    fd.append('otp',otp);
+    const r=await fetch(API,{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.status==='ok'){
+      clearInterval(timerInv);
+      startTree(d.pid);
+    } else {
+      showErr('s2',d.message||'არასწორი კოდი');
+      clearOtp();
+      document.querySelector('.otp-d').focus();
+    }
+  } catch(e){
+    showErr('s2','კავშირის შეცდომა.');
+  }
+  setLoad('s2',false);
+}
+
+function back(){clearInterval(timerInv);showScreen('s1');clearOtp();}
+
+function doLogout(){
+  fetch(API,{method:'POST',body:new URLSearchParams({action:'logout'})});
+  document.getElementById('tree-screen').style.display='none';
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  showScreen('s1');
+  document.getElementById('pid-inp').value='';
+}
+
+let svgEl,gEl,zFn,rootN,tLayout;
+let isVertical = true; // vertical by default
+const W=function(){return window.innerWidth;},H=function(){return window.innerHeight;};
+const isMob=window.innerWidth<600;
+const sR=d3.scaleLog().domain([1,60000]).range([3,20]).clamp(true);
+function nr(d){if(!d.parent)return 26;if(d.depth===1)return Math.max(sR(d.data.size||1),20);return Math.max(sR(Math.max(d.data.size||1,1)),12);}
+
+let uid=0; const DUR=280;
+
+function buildSub(pid,depth,max,seen,offset){
+  offset = offset || 0;
+  seen=new Set(Array.from(seen).concat([pid]));
+  const n=TREE[pid];
+  if(!n) return {name:pid,pid:pid,size:0,direct:0,children:[]};
+  let ch = (n.c||[]).slice();
+  const totalDirect = ch.length;
+  const res={name:n.n,pid:pid,size:n.s||0,direct:totalDirect,children:[]};
+  if(depth<max && ch.length){
+    // DEPTH 0 (root) with many children: show ONLY productive ones (size > 0)
+    // + add a "სრული სია" button to open Gen1 panel
+    if(depth === 0 && totalDirect > 30){
+      const productive = ch.filter(function(cp){
+        const t = TREE[cp];
+        return t && (t.s||0) > 0;
+      });
+      // Sort productive by size descending
+      productive.sort(function(a,b){
+        return (TREE[b].s||0) - (TREE[a].s||0);
+      });
+      for(let k=0; k<productive.length; k++){
+        const cp = productive[k];
+        if(!seen.has(cp)){
+          const c = buildSub(cp, depth+1, max, seen, 0);
+          if(c) res.children.push(c);
+        }
+      }
+      // Summary node for the rest (inactive/leaf members)
+      const leafCount = totalDirect - productive.length;
+      if(leafCount > 0){
+        res.children.push({
+          name: '📋 კიდევ ' + leafCount.toLocaleString() + ' წევრი',
+          pid: '__gen1list__',
+          size: 0,
+          direct: 0,
+          children: [],
+          isGen1Btn: true
+        });
+      }
+      return res;
+    }
+    
+    // Other depths: sort + paginate
+    if(ch.length > 50){
+      ch.sort(function(a,b){
+        const sa = (TREE[a] && TREE[a].s) || 0;
+        const sb = (TREE[b] && TREE[b].s) || 0;
+        return sb - sa;
+      });
+    }
+    const pageSize = depth===0 ? 100 :
+                     depth===1 ? 50 :
+                     depth===2 ? 15 :
+                     depth===3 ? 10 : 8;
+    const end = Math.min(ch.length, offset + pageSize);
+    for(let k=offset; k<end; k++){
+      const cp=ch[k];
+      if(!seen.has(cp)){
+        const c=buildSub(cp,depth+1,max,seen,0);
+        if(c) res.children.push(c);
+      }
+    }
+    if(end < ch.length){
+      const remaining = ch.length - end;
+      res.children.push({
+        name: '➕ კიდევ ' + remaining.toLocaleString() + ' წევრი',
+        pid: '__more__' + pid + '__' + end,
+        size: 0,
+        direct: 0,
+        children: [],
+        isMore: true,
+        moreParentPid: pid,
+        moreOffset: end,
+        moreDepth: depth
+      });
+    }
+  }
+  return res;
+}
+
+function startTree(pid){
+  const n=TREE[pid];
+  if(!n){alert('მომხმარებელი ვერ მოიძებნა');return;}
+  const b=BONUS[pid],pct=b?b.pct:0;
+  document.getElementById('hname').textContent=n.n;
+  document.getElementById('htitle').textContent=ttl(pct, b?b.gv:null)+(pct?' ('+pct+'%)':'');
+  document.getElementById('htitle').style.color=C[pct]||'#aaa';
+  document.getElementById('hs-t').textContent=(n.s||0).toLocaleString();
+  document.getElementById('hs-d').textContent=(n.c||[]).length.toLocaleString();
+  document.getElementById('hs-g').textContent=b?b.gv.toLocaleString():'—';
+  document.getElementById('hs-b').textContent=b&&b.bonus>0?b.bonus.toLocaleString()+'₾':'—';
+
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('tree-screen').style.display='block';
+
+  d3.select('#svg').selectAll('*').remove();
+  const w=W(),h=H();
+  svgEl=d3.select('#svg').attr('width',w).attr('height',h);
+  gEl=svgEl.append('g');
+  zFn=d3.zoom().scaleExtent([0.03,6]).on('zoom',function(e){gEl.attr('transform',e.transform);});
+  svgEl.call(zFn);
+
+  tLayout=d3.tree().nodeSize(
+    isVertical 
+      ? (isMob?[100,110]:[140,140])
+      : (isMob?[90,220]:[80,280])
+  );
+  rootN=d3.hierarchy(buildSub(pid,0,5,new Set()));
+  rootN.x0=0;rootN.y0=0;
+  function col(d){if(d.children){d._children=d.children;d._children.forEach(col);d.children=null;}}
+  if(rootN.children) rootN.children.forEach(col);
+  update(rootN);
+  if(isVertical){
+    svgEl.call(zFn.transform, d3.zoomIdentity.translate(w/2, 80).scale(isMob?.55:.85));
+  } else {
+    const sc = isMob ? .6 : .9;
+    const tx = isMob ? 80 : 120;
+    svgEl.call(zFn.transform, d3.zoomIdentity.translate(tx, h/2).scale(sc));
+  }
+}
+
+function update(src){
+  if(!rootN) return;
+  const nodes=rootN.descendants(),links=rootN.links();
+  tLayout(rootN);
+  const diag = isVertical 
+    ? d3.linkVertical().x(function(d){return d.x;}).y(function(d){return d.y;})
+    : d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;});
+
+  const lk=gEl.selectAll('path.link').data(links,function(d){return d.target.id;});
+  lk.enter().insert('path','g').attr('class','link')
+    .attr('stroke',function(d){return clr(d.target.data.pid,false);})
+    .attr('stroke-width',function(d){return d.target.depth===1?1.5:1;})
+    .attr('d',function(d){const o={x:src.x0,y:src.y0};return diag({source:o,target:o});})
+  .merge(lk).transition().duration(DUR).attr('d',diag).attr('stroke',function(d){return clr(d.target.data.pid,false);});
+  lk.exit().transition().duration(DUR).attr('d',function(d){const o={x:src.x,y:src.y};return diag({source:o,target:o});}).remove();
+
+  const nd=gEl.selectAll('g.node').data(nodes,function(d){return d.id||(d.id=++uid);});
+  const ne=nd.enter().append('g').attr('class','node')
+    .attr('transform',function(d){
+      return isVertical 
+        ? 'translate('+src.x0+','+src.y0+')'
+        : 'translate('+src.y0+','+src.x0+')';
+    })
+    .on('click',function(e,d){
+      e.stopPropagation();
+      hideMemberMenu();
+      
+      // Gen1 list button: open the first-generation panel
+      if(d.data.isGen1Btn){
+        if(!g1Open) toggleGen1();
+        return;
+      }
+      
+      // "Load more" node: replace itself with next batch of siblings
+      if(d.data.isMore){
+        const parent = d.parent;
+        if(!parent) return;
+        const parentPid = d.data.moreParentPid;
+        const offset = d.data.moreOffset;
+        const depthVal = d.data.moreDepth;
+        const treeNode = TREE[parentPid];
+        if(!treeNode || !treeNode.c) return;
+        
+        // Build next batch
+        const seen = new Set();
+        let p = parent;
+        while(p){ seen.add(p.data.pid); p = p.parent; }
+        const subData = buildSub(parentPid, depthVal, depthVal+2, seen, offset);
+        
+        // Remove the "more" node from parent's children
+        const childArr = parent.children || parent._children;
+        if(childArr){
+          const idx = childArr.indexOf(d);
+          if(idx >= 0) childArr.splice(idx, 1);
+        }
+        
+        // Add new children to parent
+        if(subData.children && subData.children.length){
+          subData.children.forEach(function(cd){
+            const ch = d3.hierarchy(cd);
+            ch.depth = d.depth;
+            ch.parent = parent;
+            ch.id = ++uid;
+            if(ch.children){
+              ch._children = ch.children;
+              ch._children.forEach(function collapseDeep(gc){
+                gc.depth = ch.depth + 1;
+                if(gc.children){ gc._children = gc.children; gc.children = null; }
+              });
+              ch.children = null;
+            }
+            if(parent.children) parent.children.push(ch);
+            else if(parent._children) parent._children.push(ch);
+          });
+        }
+        update(parent);
+        return;
+      }
+      
+      // Lazy-load children if not present
+      if(!d.children && !d._children){
+        const treeNode = TREE[d.data.pid];
+        if(treeNode && treeNode.c && treeNode.c.length){
+          const seen = new Set();
+          let p = d;
+          while(p){ seen.add(p.data.pid); p = p.parent; }
+          const subData = buildSub(d.data.pid, 0, 4, seen);
+          if(subData.children && subData.children.length){
+            const newChildren = subData.children.map(function(cd){
+              const ch = d3.hierarchy(cd);
+              ch.depth = d.depth + 1;
+              ch.parent = d;
+              ch.id = ++uid;
+              if(ch.children){
+                ch._children = ch.children;
+                ch._children.forEach(function collapseDeep(gc){
+                  gc.depth = ch.depth + 1;
+                  if(gc.children){
+                    gc._children = gc.children;
+                    gc.children = null;
+                  }
+                });
+                ch.children = null;
+              }
+              return ch;
+            });
+            d._children = newChildren;
+            d.data.direct = treeNode.c.length;
+          }
+        }
+      }
+      // Toggle expand/collapse directly
+      if(d.children){d._children=d.children;d.children=null;}
+      else if(d._children){d.children=d._children;d._children=null;}
+      update(d);
+    })
+    .on('contextmenu',function(e,d){
+      // Right-click → action menu (call, WhatsApp, SMS)
+      e.preventDefault();
+      e.stopPropagation();
+      hidTip();
+      if(d.parent) openMemberMenu(e, d);
+    })
+    .on('mouseover',function(e,d){showTip(e,d);})
+    .on('mousemove',function(e){movTip(e);})
+    .on('mouseout',function(){hidTip();});
+
+  ne.append('circle').attr('r',0)
+    .attr('fill',function(d){
+      if(d.data.isGen1Btn) return '#8fa5ff';
+      if(d.data.isMore) return '#ffd700';
+      return clr(d.data.pid,!d.parent);
+    })
+    .attr('stroke',function(d){
+      if(d.data.isGen1Btn) return '#8fa5ff';
+      if(d.data.isMore) return '#ffd700';
+      return clr(d.data.pid,!d.parent);
+    })
+    .attr('fill-opacity',function(d){
+      if(d.data.isGen1Btn) return 0.35;
+      if(d.data.isMore) return 0.3;
+      if(!d.parent) return 1; // root solid
+      const b = BONUS[d.data.pid];
+      const pct = b ? b.pct : 0;
+      return pct >= 3 ? 0.88 : 0.18;
+    });
+
+  ne.append('text').attr('class','nlbl').attr('dy','0.31em')
+    .attr('fill',function(d){return !d.parent?'#ff6b9d':d.depth===1?'#fff':'#bbb';})
+    .attr('font-size',function(d){return !d.parent?'13px':d.depth===1?'11px':'10px';})
+    .attr('font-weight',function(d){return (!d.parent||d.depth===1)?'600':'400';})
+    .attr('opacity',0)
+    .text(function(d){const n=d.data.name||'';return n.length>15?n.slice(0,14)+'…':n;});
+
+  ne.append('text').attr('class','tlbl').attr('dy','1.65em')
+    .attr('fill','#999').attr('font-size','8.5px').attr('opacity',0).attr('pointer-events','none')
+    .text(function(d){if(d.depth!==1)return'';const b=BONUS[d.data.pid];return ttl(b?b.pct:0, b?b.gv:null);});
+
+  // Initials INSIDE circle
+  ne.append('text').attr('class','ini').attr('dy','0.31em').attr('x',0).attr('text-anchor','middle')
+    .attr('fill',function(d){
+      if(!d.parent) return '#fff';
+      const b=BONUS[d.data.pid];
+      const pct = b?b.pct:0;
+      if(pct===25) return '#000'; // gold bg — dark text
+      return '#fff';
+    })
+    .attr('font-weight','500')
+    .attr('pointer-events','none').attr('opacity',0)
+    .attr('font-size',function(d){return !d.parent?'14px':d.depth===1?'11px':'9px';})
+    .text(function(d){return initials(d.data.name);});
+
+  // Percentage BADGE at bottom-right of circle
+  ne.append('g').attr('class','pbdg').attr('opacity',0);
+
+  const nu=ne.merge(nd);
+  nu.transition().duration(DUR).attr('transform',function(d){
+    return isVertical 
+      ? 'translate('+d.x+','+d.y+')'
+      : 'translate('+d.y+','+d.x+')';
+  });
+  nu.select('circle').transition().duration(DUR)
+    .attr('r',function(d){return nr(d);})
+    .attr('fill',function(d){return clr(d.data.pid,!d.parent);})
+    .attr('stroke',function(d){return clr(d.data.pid,!d.parent);})
+    .attr('fill-opacity',function(d){
+      if(!d.parent) return 1;
+      const b = BONUS[d.data.pid];
+      const pct = b ? b.pct : 0;
+      return pct >= 3 ? 0.88 : 0.18;
+    })
+    .attr('stroke-width',function(d){return !d.parent?3:d.depth===1?2.5:1.5;});
+  nu.select('.nlbl').transition().duration(DUR)
+    .attr('x',function(d){
+      if(isVertical) return 0;
+      // Horizontal: leaf nodes label on RIGHT, expanded nodes on LEFT
+      return (d._children ? -1 : 1) * (nr(d) + 8);
+    })
+    .attr('y',function(d){
+      if(isVertical) return nr(d) + 24;
+      return 0;
+    })
+    .attr('dy',function(d){return isVertical ? '0.3em' : '0.31em';})
+    .attr('text-anchor',function(d){
+      if(isVertical) return 'middle';
+      return d._children ? 'end' : 'start';
+    })
+    .attr('opacity',1);
+  nu.select('.tlbl').transition().duration(DUR)
+    .attr('x',function(d){
+      if(isVertical) return 0;
+      return (d._children ? -1 : 1) * (nr(d) + 8);
+    })
+    .attr('y',function(d){
+      if(isVertical) return nr(d) + 38;
+      return 14;
+    })
+    .attr('dy',function(d){return isVertical ? '0.3em' : '0.31em';})
+    .attr('text-anchor',function(d){
+      if(isVertical) return 'middle';
+      return d._children ? 'end' : 'start';
+    })
+    .attr('opacity',function(d){return d.depth===1?.65:0;});
+  // Initials opacity
+  nu.select('.ini').transition().duration(DUR)
+    .attr('opacity',function(d){
+      const r = nr(d);
+      return r >= 8 ? 1 : 0; // only show if circle big enough
+    })
+    .attr('font-size',function(d){
+      return !d.parent ? '14px' : d.depth===1 ? '11px' : (nr(d) >= 12 ? '9px' : '8px');
+    });
+
+  // Percentage badge group — render only for bonus holders (3%+)
+  nu.each(function(d){
+    const g = d3.select(this).select('g.pbdg');
+    g.selectAll('*').remove();
+    if(!d.parent) return;
+    const b = BONUS[d.data.pid];
+    const pct = b ? b.pct : 0;
+    // Show % for ALL members, even 0%
+    const r = nr(d);
+    const offset = r * 0.75;
+    const color = pct === 0 ? (ACTIVE[d.data.pid] ? '#888' : '#555') : (C[pct] || '#888');
+    const txt = pct + '%';
+    const fontSize = r >= 15 ? 9 : 8;
+    const padH = r >= 15 ? 5 : 4;
+    const padV = r >= 15 ? 3 : 2;
+    const approxW = txt.length * fontSize * 0.6 + padH * 2;
+    const approxH = fontSize + padV * 2;
+    g.append('rect')
+      .attr('x', offset - approxW/2)
+      .attr('y', offset - approxH/2)
+      .attr('width', approxW)
+      .attr('height', approxH)
+      .attr('rx', approxH/2)
+      .attr('fill', color)
+      .attr('stroke', '#0a0a10')
+      .attr('stroke-width', 2);
+    g.append('text')
+      .attr('x', offset)
+      .attr('y', offset)
+      .attr('dy', '0.32em')
+      .attr('text-anchor','middle')
+      .attr('fill', pct===25 || pct===22 ? '#000' : (pct===0 ? '#fff' : '#000'))
+      .attr('font-size', fontSize + 'px')
+      .attr('font-weight', '600')
+      .attr('pointer-events','none')
+      .text(txt);
+  });
+  nu.select('.pbdg').transition().duration(DUR).attr('opacity', 1);
+  nd.exit().transition().duration(DUR).attr('transform',function(d){
+    return isVertical 
+      ? 'translate('+src.x+','+src.y+')'
+      : 'translate('+src.y+','+src.x+')';
+  }).remove();
+  nodes.forEach(function(d){d.x0=d.x;d.y0=d.y;});
+}
+
+function showTip(e,d){
+  const b=BONUS[d.data.pid],pv=ACTIVE[d.data.pid],pct=b?b.pct:0;
+  document.getElementById('tip-name').textContent=d.data.name||'—';
+  const ttlEl=document.getElementById('tip-ttl');
+  ttlEl.textContent=ttl(pct, b?b.gv:null)+(pct?' ('+pct+'%)':'');
+  ttlEl.style.color=C[pct]||'#aaa';
+  document.getElementById('tip-gv').textContent=b?b.gv.toLocaleString():'0';
+  document.getElementById('tip-pv').textContent=b?b.pv:'0';
+  document.getElementById('tip-bon').textContent=b&&b.bonus>0?b.bonus.toLocaleString()+'₾':'—';
+  document.getElementById('tip-tm').textContent=(d.data.size||0).toLocaleString();
+  document.getElementById('tip-d1').textContent=(d.data.direct||0).toLocaleString();
+  const st=document.getElementById('tip-st');
+  st.textContent=pv?'✅ აქტიური':'❌ არ-აქტიური';
+  st.style.color=pv?'#4dff91':'#ff4d6b';
+  movTip(e);
+  document.getElementById('tip').style.display='block';
+}
+function movTip(e){const t=document.getElementById('tip');t.style.left=Math.min(e.clientX+14,W()-280)+'px';t.style.top=Math.min(e.clientY-10,H()-180)+'px';}
+function hidTip(){document.getElementById('tip').style.display='none';}
+
+function zi(){if(svgEl)svgEl.transition().call(zFn.scaleBy,1.4);}
+function zo(){if(svgEl)svgEl.transition().call(zFn.scaleBy,.72);}
+function rv(){
+  if(!svgEl) return;
+  if(isVertical){
+    svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(W()/2, 80).scale(isMob?.55:.85));
+  } else {
+    const sc = isMob ? .6 : .9;
+    const tx = isMob ? 80 : 120;
+    svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(tx, H()/2).scale(sc));
+  }
+}
+function colA(){function c(d){if(d.children){d._children=d.children;d._children.forEach(c);d.children=null;}}if(rootN&&rootN.children)rootN.children.forEach(c);update(rootN);}
+function exp2(){if(!rootN)return;rootN.descendants().forEach(function(d){if(d._children&&d.depth<2){d.children=d._children;d._children=null;}});update(rootN);}
+
+function toggleOrient(){
+  isVertical = !isVertical;
+  document.getElementById('orient-btn').textContent = isVertical ? '⇅' : '⇄';
+  if(!rootN) return;
+  // Rebuild layout with new orientation
+  tLayout = d3.tree().nodeSize(
+    isVertical 
+      ? (isMob?[100,110]:[140,140])
+      : (isMob?[90,220]:[80,280])
+  );
+  update(rootN);
+  // Reset view
+  setTimeout(function(){
+    if(isVertical){
+      svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(W()/2, 80).scale(isMob?.55:.85));
+    } else {
+      const sc = isMob ? .6 : .9;
+      const tx = isMob ? 80 : 120;
+      svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(tx, H()/2).scale(sc));
+    }
+  }, 50);
+}
+
+
+// ── TOP-10 PANEL ──
+let t10Open = false, t10Tab = 'team';
+
+function toggleTop10(){
+  t10Open = !t10Open;
+  document.getElementById('top10-panel').classList.toggle('open', t10Open);
+  if(t10Open) renderTop10();
+}
+
+function renderTop10(){
+  if(!rootN) return;
+  const all = [];
+  // Collect all team members (exclude self)
+  const visited = new Set([rootN.data.pid]);
+  const queue = [rootN.data.pid];
+  while(queue.length){
+    const pid = queue.shift();
+    if(pid !== rootN.data.pid){
+      const n = TREE[pid];
+      const b = BONUS[pid];
+      // Only include members with personal PV >= 125
+      const pv = b ? (b.pv || 0) : 0;
+      if(pv >= 125){
+        all.push({
+          pid: pid,
+          name: n ? n.n : pid,
+          team: n ? (n.s || 0) : 0,
+          gv: b ? b.gv : 0,
+          bonus: b ? b.bonus : 0,
+          pct: b ? b.pct : 0,
+          pv: pv
+        });
+      }
+    }
+    const n = TREE[pid];
+    if(n && n.c){
+      for(let i=0;i<n.c.length;i++){
+        if(!visited.has(n.c[i])){
+          visited.add(n.c[i]);
+          queue.push(n.c[i]);
+        }
+      }
+    }
+  }
+  
+  // Sort by selected tab
+  const key = t10Tab;
+  all.sort(function(a,b){return b[key] - a[key];});
+  const top = all.slice(0, 10);
+  
+  let html = '';
+  top.forEach(function(m, i){
+    const val = t10Tab === 'team' ? m.team.toLocaleString() :
+                t10Tab === 'gv'   ? m.gv.toLocaleString() :
+                (m.bonus > 0 ? m.bonus.toLocaleString() + '₾' : '—');
+    const sub = t10Tab === 'team' ? 'გუნდი' :
+                t10Tab === 'gv'   ? 'GV' : 'ბონუსი';
+    const pctBadge = m.pct > 0 ? ' • ' + m.pct + '%' : '';
+    html += '<div class="t10-item" data-pid="'+m.pid+'">' +
+      '<div class="t10-row">' +
+        '<div class="t10-rank">'+(i+1)+'.</div>' +
+        '<div class="t10-name">'+m.name+'</div>' +
+        '<div class="t10-val">'+val+'</div>' +
+      '</div>' +
+      '<div class="t10-sub">'+sub+pctBadge+'</div>' +
+    '</div>';
+  });
+  
+  if(!top.length) html = '<div style="color:#666;font-size:12px;text-align:center;padding:20px">მონაცემი არ არის</div>';
+  
+  const body = document.getElementById('t10-body');
+  body.innerHTML = html;
+  
+  // Click handlers — focus member in tree
+  body.querySelectorAll('.t10-item').forEach(function(el){
+    el.onclick = function(){
+      const pid = el.getAttribute('data-pid');
+      const n = TREE[pid];
+      if(n) pickSr(n.n);
+      toggleTop10();
+    };
+  });
+}
+
+// Tab switching
+document.querySelectorAll('.t10-tab').forEach(function(tab){
+  tab.onclick = function(){
+    document.querySelectorAll('.t10-tab').forEach(function(t){t.classList.remove('active');});
+    tab.classList.add('active');
+    t10Tab = tab.getAttribute('data-tab');
+    renderTop10();
+  };
+});
+
+// ── GEN1 PANEL (first generation full list) ──
+let g1Open = false;
+let g1Sort = 'size';
+let g1Filter = 'bonus';
+let g1Search = '';
+let g1Page = 0;
+const G1_PER_PAGE = 20;
+
+function toggleGen1(){
+  g1Open = !g1Open;
+  document.getElementById('gen1-panel').classList.toggle('open', g1Open);
+  if(g1Open){
+    g1Page = 0;
+    renderGen1();
+  }
+}
+
+function getGen1Data(){
+  if(!rootN) return [];
+  const rootPid = rootN.data.pid;
+  const root = TREE[rootPid];
+  if(!root || !root.c) return [];
+  const arr = [];
+  for(let i=0; i<root.c.length; i++){
+    const pid = root.c[i];
+    const n = TREE[pid];
+    const b = BONUS[pid];
+    arr.push({
+      pid: pid,
+      name: n ? n.n : pid,
+      size: n ? (n.s||0) : 0,
+      direct: n ? ((n.c||[]).length) : 0,
+      gv: b ? b.gv : 0,
+      bonus: b ? b.bonus : 0,
+      pct: b ? b.pct : 0,
+      pv: b ? (b.pv||0) : 0,
+      active: !!ACTIVE[pid]
+    });
+  }
+  return arr;
+}
+
+function filterGen1(arr){
+  let out = arr;
+  // Apply filter
+  if(g1Filter === 'bonus') out = out.filter(function(x){return x.pct >= 3;});
+  else if(g1Filter === 'active') out = out.filter(function(x){return x.active;});
+  else if(g1Filter === 'inactive') out = out.filter(function(x){return !x.active;});
+  // Apply search
+  if(g1Search){
+    const s = g1Search.toLowerCase();
+    out = out.filter(function(x){
+      return x.name.toLowerCase().indexOf(s) >= 0 || x.pid.indexOf(s) >= 0;
+    });
+  }
+  // Apply sort
+  out = out.slice();
+  if(g1Sort === 'size') out.sort(function(a,b){return b.size - a.size;});
+  else if(g1Sort === 'bonus') out.sort(function(a,b){return b.bonus - a.bonus;});
+  else if(g1Sort === 'pct') out.sort(function(a,b){return b.pct - a.pct || b.size - a.size;});
+  else if(g1Sort === 'name') out.sort(function(a,b){return a.name.localeCompare(b.name, 'ka');});
+  return out;
+}
+
+function renderGen1(){
+  const all = getGen1Data();
+  const filtered = filterGen1(all);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / G1_PER_PAGE));
+  if(g1Page >= totalPages) g1Page = totalPages - 1;
+  if(g1Page < 0) g1Page = 0;
+  
+  // Count
+  document.getElementById('g1-count').textContent =
+    'ნაჩვენებია ' + total.toLocaleString() + ' წევრი ' + all.length.toLocaleString() + '-დან';
+  
+  // List
+  const start = g1Page * G1_PER_PAGE;
+  const end = Math.min(total, start + G1_PER_PAGE);
+  const page = filtered.slice(start, end);
+  let html = '';
+  if(!page.length){
+    html = '<div style="color:#666;font-size:12px;text-align:center;padding:30px">მონაცემი არ არის</div>';
+  } else {
+    page.forEach(function(m, i){
+      const rank = start + i + 1;
+      const color = C[m.pct] || '#888';
+      const pctColor = m.pct >= 3 ? color : (m.active ? '#888' : '#ff4d6b');
+      const pctBg = m.pct >= 3 ? color + '22' : 'rgba(120,120,120,.15)';
+      html += '<div class="g1-item" data-pid="' + m.pid + '">' +
+        '<div class="g1-idx">' + rank + '.</div>' +
+        '<div class="g1-dot" style="background:' + color + '"></div>' +
+        '<div class="g1-body">' +
+          '<div class="g1-name">' + m.name + '</div>' +
+          '<div class="g1-meta">' +
+            '<span>👥 <b>' + m.size.toLocaleString() + '</b></span>' +
+            '<span>📊 <b>' + m.gv.toLocaleString() + '</b> GV</span>' +
+            (m.bonus > 0 ? '<span>💰 <b>' + m.bonus.toLocaleString() + '₾</b></span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="g1-pct" style="background:' + pctBg + ';color:' + pctColor + '">' + m.pct + '%</div>' +
+      '</div>';
+    });
+  }
+  document.getElementById('g1-list').innerHTML = html;
+  
+  // Click → focus member in tree
+  document.querySelectorAll('#g1-list .g1-item').forEach(function(el){
+    el.onclick = function(){
+      const pid = el.getAttribute('data-pid');
+      const n = TREE[pid];
+      if(n){
+        toggleGen1();
+        pickSr(n.n);
+      }
+    };
+  });
+  
+  // Pager
+  renderGen1Pager(totalPages);
+}
+
+function renderGen1Pager(totalPages){
+  const pager = document.getElementById('g1-pager');
+  if(totalPages <= 1){ pager.innerHTML = ''; return; }
+  
+  let html = '';
+  // Previous
+  html += '<button class="g1-pbtn" data-p="' + (g1Page-1) + '"' + (g1Page===0?' disabled':'') + '>‹</button>';
+  
+  // Page numbers with ellipsis
+  const pages = [];
+  pages.push(0);
+  if(g1Page > 2) pages.push(-1); // ellipsis
+  for(let i=Math.max(1,g1Page-1); i<=Math.min(totalPages-2,g1Page+1); i++) pages.push(i);
+  if(g1Page < totalPages-3) pages.push(-1);
+  if(totalPages > 1) pages.push(totalPages-1);
+  
+  // Deduplicate consecutive
+  const seen = new Set();
+  pages.forEach(function(p){
+    if(p === -1){ html += '<span class="g1-ellips">…</span>'; return; }
+    if(seen.has(p)) return;
+    seen.add(p);
+    html += '<button class="g1-pbtn' + (p===g1Page?' active':'') + '" data-p="' + p + '">' + (p+1) + '</button>';
+  });
+  
+  // Next
+  html += '<button class="g1-pbtn" data-p="' + (g1Page+1) + '"' + (g1Page>=totalPages-1?' disabled':'') + '>›</button>';
+  
+  pager.innerHTML = html;
+  pager.querySelectorAll('.g1-pbtn').forEach(function(el){
+    el.onclick = function(){
+      if(el.disabled) return;
+      g1Page = parseInt(el.getAttribute('data-p'));
+      renderGen1();
+      document.getElementById('g1-list').scrollTop = 0;
+    };
+  });
+}
+
+// Sort buttons
+document.querySelectorAll('.g1-sbtn').forEach(function(btn){
+  btn.onclick = function(){
+    document.querySelectorAll('.g1-sbtn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    g1Sort = btn.getAttribute('data-sort');
+    g1Page = 0;
+    renderGen1();
+  };
+});
+
+// Filter buttons
+document.querySelectorAll('.g1-fbtn').forEach(function(btn){
+  btn.onclick = function(){
+    document.querySelectorAll('.g1-fbtn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    g1Filter = btn.getAttribute('data-filter');
+    g1Page = 0;
+    renderGen1();
+  };
+});
+
+// Search
+let g1SearchTmr;
+document.getElementById('g1-searchinp').addEventListener('input', function(){
+  clearTimeout(g1SearchTmr);
+  const v = this.value.trim();
+  g1SearchTmr = setTimeout(function(){
+    g1Search = v;
+    g1Page = 0;
+    renderGen1();
+  }, 200);
+});
+
+// ── FILTER (title × level) ──
+let filterOpen = false;
+let activeTitleFilter = 'all';
+let activeLevelFilter = 'all';
+
+function toggleFilter(){
+  filterOpen = !filterOpen;
+  document.getElementById('filter-panel').classList.toggle('open', filterOpen);
+  if(filterOpen) buildLevelFilterOptions();
+}
+
+function buildLevelFilterOptions(){
+  if(!rootN) return;
+  // Get max depth in current tree
+  let maxLvl = 0;
+  function walk(n, d){
+    if(d > maxLvl) maxLvl = d;
+    const ch = n.children || n._children;
+    if(ch) ch.forEach(function(c){walk(c, d+1);});
+  }
+  walk(rootN, 0);
+  
+  const wrap = document.getElementById('fp-levels');
+  if(!wrap) return;
+  let html = '<div class="fp-opt' + (activeLevelFilter==='all'?' selected':'') + '" data-level="all">' +
+    '<div class="fp-dot" style="background:#fff"></div>ყველა დონე</div>';
+  for(let i=1; i<=Math.max(maxLvl,1); i++){
+    html += '<div class="fp-opt' + (activeLevelFilter==i?' selected':'') + '" data-level="'+i+'">' +
+      '<div class="fp-dot" style="background:#ff6b9d"></div>' + i + '-დონე</div>';
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.fp-opt').forEach(function(el){
+    el.onclick = function(){
+      const lvl = el.getAttribute('data-level');
+      activeLevelFilter = lvl === 'all' ? 'all' : parseInt(lvl);
+      buildLevelFilterOptions();
+      applyFilterCombined();
+    };
+  });
+}
+
+function nodeMatchesTitle(d){
+  if(activeTitleFilter === 'all') return true;
+  const b = BONUS[d.data.pid];
+  const active = ACTIVE[d.data.pid];
+  if(activeTitleFilter === 'active') return !!active;
+  if(activeTitleFilter === 'inactive') return !active;
+  if(activeTitleFilter === 'bonus') return !!(b && b.pct >= 3);
+  // Specific pct value
+  const pct = parseInt(activeTitleFilter);
+  if(!isNaN(pct)) return !!(b && b.pct === pct);
+  return true;
+}
+
+function nodeMatchesLevel(d){
+  if(activeLevelFilter === 'all') return true;
+  return d.depth === activeLevelFilter;
+}
+
+function applyFilterCombined(){
+  if(!rootN) return;
+  
+  const isFiltered = activeTitleFilter !== 'all' || activeLevelFilter !== 'all';
+  const btn = document.getElementById('filter-btn');
+  btn.classList.toggle('active', isFiltered);
+  btn.textContent = isFiltered ? '🔍 ფილტრი ●' : '🔍 ფილტრი';
+  
+  gEl.selectAll('g.node').transition().duration(300)
+    .style('opacity', function(d){
+      if(!d.parent) return 1;
+      return (nodeMatchesTitle(d) && nodeMatchesLevel(d)) ? 1 : 0.12;
+    });
+  
+  gEl.selectAll('path.link').transition().duration(300)
+    .style('opacity', function(d){
+      return (nodeMatchesTitle(d.target) && nodeMatchesLevel(d.target)) ? 0.4 : 0.06;
+    });
+}
+
+// Title filter click handlers
+document.querySelectorAll('.fp-opt[data-title]').forEach(function(el){
+  el.onclick = function(){
+    activeTitleFilter = el.getAttribute('data-title');
+    document.querySelectorAll('.fp-opt[data-title]').forEach(function(e){e.classList.remove('selected');});
+    el.classList.add('selected');
+    applyFilterCombined();
+  };
+});
+
+// Close filter panel on outside click
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('filter-panel');
+  const btn = document.getElementById('filter-btn');
+  if(filterOpen && panel && !panel.contains(e.target) && e.target !== btn){
+    filterOpen = false;
+    panel.classList.remove('open');
+  }
+});
+
+// ── ANALYTICS ──
+const PCT_COLORS={25:'#ffd700',22:'#4dffb8',18:'#4db8ff',15:'#7c6ff7',12:'#ff6b9d',9:'#4dff91',6:'#aaff4d',3:'#ffb74d',0:'#ff4d6b'};
+const PCT_LABELS={25:'მენეჯ. 25%',22:'ინფლ. 22%',18:'ინფლ. 18%',15:'ინფლ. 15%',12:'ინფლ. 12%',9:'ინფლ. 9%',6:'ინფლ. 6%',3:'ინფლ. 3%',0:'0% / არ-აქტ.'};
+const ALL_PCTS=[25,22,18,15,12,9,6,3,0];
+
+let apOpen=false, currentLevel='all', levelNodes={};
+
+function toggleAnalytics(){
+  apOpen=!apOpen;
+  document.getElementById('analytics-panel').classList.toggle('open',apOpen);
+  if(apOpen) buildAnalytics();
+}
+
+function buildLevelMapFull(rootPid){
+  levelNodes={};
+  const visited=new Set([rootPid]);
+  const queue=[[rootPid,0]];
+  while(queue.length){
+    const [pid,lvl]=queue.shift();
+    if(lvl>0){
+      if(!levelNodes[lvl]) levelNodes[lvl]=[];
+      levelNodes[lvl].push(pid);
+    }
+    const n=TREE[pid];
+    if(!n) continue;
+    const ch=n.c||[];
+    for(let i=0;i<ch.length;i++){
+      if(!visited.has(ch[i])){
+        visited.add(ch[i]);
+        queue.push([ch[i],lvl+1]);
+      }
+    }
+  }
+}
+
+function buildAnalytics(){
+  if(!rootN) return;
+  const rootPid=rootN.data.pid;
+  buildLevelMapFull(rootPid);
+  
+  const lvlNums=Object.keys(levelNodes).map(Number);
+  const maxLvl=lvlNums.length?Math.max.apply(null,lvlNums):1;
+
+  const wrap=document.getElementById('ap-levels');
+  wrap.innerHTML='';
+
+  function makeBtn(label,lvl){
+    const btn=document.createElement('button');
+    btn.className='ap-lvl'+(currentLevel===lvl?' active':'');
+    btn.textContent=label;
+    btn.onclick=function(){selectLevel(lvl);};
+    return btn;
+  }
+
+  wrap.appendChild(makeBtn('ყველა','all'));
+  for(let i=1;i<=maxLvl;i++){
+    wrap.appendChild(makeBtn(i+'-დონე',i));
+  }
+
+  renderAnalytics();
+}
+
+function selectLevel(lvl){
+  currentLevel=lvl;
+  buildAnalytics();
+}
+
+function renderAnalytics(){
+  let pids=[];
+  if(currentLevel==='all'){
+    Object.keys(levelNodes).forEach(function(k){pids=pids.concat(levelNodes[k]);});
+  } else {
+    pids=levelNodes[currentLevel]||[];
+  }
+
+  const total=pids.length;
+  document.getElementById('ap-total').textContent=
+    (currentLevel==='all'?'სულ გუნდი':'დონე '+currentLevel)+': '+total.toLocaleString()+' წევრი';
+
+  const counts={};
+  ALL_PCTS.forEach(function(p){counts[p]=0;});
+
+  pids.forEach(function(pid){
+    const b=BONUS[pid];
+    const pct=b?b.pct:0;
+    counts[pct]=(counts[pct]||0)+1;
+  });
+
+  let maxCount=1;
+  ALL_PCTS.forEach(function(p){if(counts[p]>maxCount)maxCount=counts[p];});
+
+  let html='';
+  ALL_PCTS.forEach(function(pct){
+    const cnt=counts[pct]||0;
+    if(cnt===0) return;
+    const barW=Math.round(cnt/maxCount*100);
+    const pcnt=total>0?(cnt/total*100).toFixed(1):'0';
+    html+='<div class="ap-row">'+
+      '<div class="ap-dot" style="background:'+PCT_COLORS[pct]+'"></div>'+
+      '<div class="ap-label">'+PCT_LABELS[pct]+'</div>'+
+      '<div class="ap-bar-wrap"><div class="ap-bar" style="width:'+barW+'%;background:'+PCT_COLORS[pct]+'"></div></div>'+
+      '<div class="ap-count">'+cnt.toLocaleString()+'</div>'+
+      '<div class="ap-pct-lbl">'+pcnt+'%</div>'+
+    '</div>';
+  });
+
+  document.getElementById('ap-rows').innerHTML=html||'<div style="color:#666;font-size:12px">მონაცემი არ არის</div>';
+}
+
+// ── SEARCH ──
+let stmr;
+document.getElementById('srchinput').addEventListener('input',function(){
+  clearTimeout(stmr);
+  const v=this.value.trim(),res=document.getElementById('srchres');
+  if(!v){res.style.display='none';return;}
+  stmr=setTimeout(function(){
+    const vl=v.toLowerCase();
+    const m=SEARCH.filter(function(x){
+      return x.n.toLowerCase().indexOf(vl)>=0 ||
+             (x.pid && x.pid.indexOf(v)>=0) ||
+             (x.m && x.m.indexOf(v)>=0);
+    }).slice(0,10);
+    if(!m.length){res.style.display='none';return;}
+    let h='';
+    m.forEach(function(x){
+      h+='<div class="sri" data-name="'+x.n.replace(/"/g,'&quot;')+'">'+
+        '<span class="sri-sz">'+x.s.toLocaleString()+'</span>'+
+        '<div class="sri-name">'+x.n+'</div>'+
+        '<div class="sri-path">'+x.p+'</div>'+
+      '</div>';
+    });
+    res.innerHTML=h;
+    res.querySelectorAll('.sri').forEach(function(el){
+      el.onclick=function(){pickSr(el.getAttribute('data-name'));};
+    });
+    res.style.display='block';
+  },220);
+});
+
+function pickSr(name){
+  document.getElementById('srchres').style.display='none';
+  document.getElementById('srchinput').value=name;
+  function fe(n,nm){
+    if(n.data.name===nm)return n;
+    if(n._children){n.children=n._children;n._children=null;}
+    if(n.children){for(let i=0;i<n.children.length;i++){const r=fe(n.children[i],nm);if(r)return r;}}
+    if(n.children&&n!==rootN){n._children=n.children;n.children=null;}
+    return null;
+  }
+  if(!rootN)return;
+  if(rootN._children){rootN.children=rootN._children;rootN._children=null;}
+  const found=fe(rootN,name);
+  update(rootN);
+  if(found){
+    setTimeout(function(){
+      gEl.selectAll('g.node').filter(function(d){return d.data.name===name;}).select('circle').attr('stroke','#fff').attr('stroke-width',4).attr('fill-opacity',1);
+      if(found.x!=null)svgEl.transition().duration(700).call(zFn.transform,d3.zoomIdentity.translate(W()*.4-found.y,H()/2-found.x).scale(1.3));
+    },DUR+80);
+  }
+}
+
+
+// ── MEMBER ACTION MENU ──
+let currentMember = null;
+
+function maskPhone(phone){
+  if(!phone || phone.length < 6) return phone || '—';
+  return phone.substring(0,3) + '***' + phone.substring(phone.length-3);
+}
+
+function openMemberMenu(e, d){
+  currentMember = d;
+  hideMemberMenu();
+  
+  const user = USERS[d.data.pid];
+  const phone = user ? user.mobile : null;
+  const maskedPhone = phone ? maskPhone(phone) : 'ნომერი არ არის';
+  const canExpand = d._children || d.children;
+  
+  const menu = document.createElement('div');
+  menu.id = 'member-menu';
+  menu.style.cssText = 'position:fixed;left:'+e.clientX+'px;top:'+e.clientY+'px;background:rgba(5,5,15,.98);border:1px solid rgba(255,107,157,.3);border-radius:12px;padding:8px;z-index:250;box-shadow:0 8px 32px rgba(0,0,0,.7);min-width:220px';
+  
+  let menuHtml = '<div style="padding:10px 14px 8px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:4px">' +
+    '<div style="font-size:12px;font-weight:600;color:#fff;margin-bottom:3px">'+d.data.name+'</div>' +
+    '<div style="font-size:11px;color:#888">📞 '+maskedPhone+'</div>' +
+    '</div>';
+  
+  if(phone){
+    menuHtml += '<div class="mm-item" id="mm-call" style="padding:10px 14px;cursor:pointer;font-size:12px;color:#4dff91;border-radius:6px">📞 დარეკვა</div>';
+    menuHtml += '<div class="mm-item" id="mm-whatsapp" style="padding:10px 14px;cursor:pointer;font-size:12px;color:#25D366;border-radius:6px">💚 WhatsApp</div>';
+    menuHtml += '<div class="mm-item" id="mm-sms-native" style="padding:10px 14px;cursor:pointer;font-size:12px;color:#4db8ff;border-radius:6px">💬 SMS (ტელეფონიდან)</div>';
+  }
+  
+  menu.innerHTML = menuHtml;
+  document.body.appendChild(menu);
+  
+  menu.querySelectorAll('.mm-item').forEach(function(el){
+    el.onmouseenter = function(){el.style.background='rgba(255,107,157,.12)';};
+    el.onmouseleave = function(){el.style.background='transparent';};
+  });
+  
+  const callBtn = document.getElementById('mm-call');
+  if(callBtn) callBtn.onclick = function(){
+    window.location.href = 'tel:+995' + phone;
+    hideMemberMenu();
+  };
+  
+  const waBtn = document.getElementById('mm-whatsapp');
+  if(waBtn) waBtn.onclick = function(){
+    window.open('https://wa.me/995' + phone, '_blank');
+    hideMemberMenu();
+  };
+  
+  const smsBtn = document.getElementById('mm-sms-native');
+  if(smsBtn) smsBtn.onclick = function(){
+    window.location.href = 'sms:+995' + phone;
+    hideMemberMenu();
+  };
+  
+  setTimeout(function(){
+    const r = menu.getBoundingClientRect();
+    if(r.right > window.innerWidth) menu.style.left = (window.innerWidth - r.width - 10) + 'px';
+    if(r.bottom > window.innerHeight) menu.style.top = (window.innerHeight - r.height - 10) + 'px';
+  },10);
+}
+function hideMemberMenu(){
+  const m = document.getElementById('member-menu');
+  if(m) m.remove();
+}
+
+// Long-press for mobile action menu
+let lpTimer = null;
+document.getElementById('svg').addEventListener('touchstart', function(e){
+  if(e.touches.length !== 1) return;
+  const touch = e.touches[0];
+  lpTimer = setTimeout(function(){
+    // Find the node under touch
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const nodeG = el && el.closest ? el.closest('g.node') : null;
+    if(!nodeG) return;
+    const d3node = d3.select(nodeG).datum();
+    if(d3node && d3node.parent){
+      const fakeEvent = {clientX: touch.clientX, clientY: touch.clientY, stopPropagation: function(){}};
+      hidTip();
+      openMemberMenu(fakeEvent, d3node);
+    }
+  }, 600);
+}, {passive: true});
+document.getElementById('svg').addEventListener('touchend', function(){
+  clearTimeout(lpTimer);
+}, {passive: true});
+document.getElementById('svg').addEventListener('touchmove', function(){
+  clearTimeout(lpTimer);
+}, {passive: true});
+
+document.addEventListener('click', function(e){
+  const m = document.getElementById('member-menu');
+  if(m && !m.contains(e.target)) hideMemberMenu();
+});
+
+// ── SMS MODAL ──
+function openSmsModal(d){
+  currentMember = d;
+  document.getElementById('sms-to-name').textContent = '→ ' + d.data.name;
+  document.getElementById('sms-text').value = '';
+  document.getElementById('sms-char-count').textContent = '0';
+  document.getElementById('sms-status').style.display = 'none';
+  document.getElementById('sms-send-btn').disabled = false;
+  document.getElementById('sms-modal').classList.add('open');
+  setTimeout(function(){document.getElementById('sms-text').focus();},100);
+}
+function closeSmsModal(){
+  document.getElementById('sms-modal').classList.remove('open');
+  currentMember = null;
+}
+document.getElementById('sms-text').addEventListener('input', function(){
+  document.getElementById('sms-char-count').textContent = this.value.length;
+});
+async function sendSmsToMember(){
+  if(!currentMember) return;
+  const text = document.getElementById('sms-text').value.trim();
+  if(!text){showSmsStatus('err','შეიყვანეთ ტექსტი');return;}
+  
+  const btn = document.getElementById('sms-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'იგზავნება...';
+  
+  try{
+    const fd = new FormData();
+    fd.append('action','send_to_member');
+    fd.append('target_pid', currentMember.data.pid);
+    fd.append('message', text);
+    const r = await fetch(API,{method:'POST',body:fd});
+    const d = await r.json();
+    if(d.status === 'ok'){
+      showSmsStatus('ok','✅ SMS გაიგზავნა ' + d.to_phone);
+      setTimeout(closeSmsModal, 2000);
+    } else {
+      showSmsStatus('err', d.message || 'შეცდომა');
+      btn.disabled = false;
+      btn.textContent = 'გაგზავნა →';
+    }
+  } catch(err){
+    showSmsStatus('err','კავშირის შეცდომა');
+    btn.disabled = false;
+    btn.textContent = 'გაგზავნა →';
+  }
+}
+function showSmsStatus(type, msg){
+  const el = document.getElementById('sms-status');
+  el.textContent = msg;
+  el.className = 'sms-status ' + type;
+  el.style.display = 'block';
+}
+
+document.addEventListener('click',function(e){
+  if(!document.getElementById('srchbox').contains(e.target))
+    document.getElementById('srchres').style.display='none';
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<!-- FARMASI_MODAL_V3_START -->
+<style id="fm-styles-v31">
+
+/* ===== FARMASI MODAL V3.1 — dark/gold ===== */
+#fm-filter-bar {
+  position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+  z-index: 99998; display: flex; gap: 6px;
+  background: rgba(10,10,20,0.88);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  border: 1px solid rgba(212,175,55,0.4); border-radius: 14px;
+  padding: 8px 12px; align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'BPG Nino Mtavruli', sans-serif;
+  font-size: 12px; color: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+}
+#fm-filter-label {
+  color: #999; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-right: 2px;
+}
+.fm-filter-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2);
+  color: #ddd; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  font-size: 12px; font-family: inherit; transition: all 0.15s; white-space: nowrap;
+}
+.fm-filter-btn:hover { border-color: rgba(212,175,55,0.6); color: #D4AF37; }
+.fm-filter-btn.fm-active {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8960B 100%);
+  color: #111; border-color: #D4AF37; font-weight: 700;
+}
+#fm-filter-info { color: #888; font-size: 10.5px; margin-left: 2px; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  #fm-filter-bar { top: 6px; padding: 6px 8px; gap: 4px; }
+  #fm-filter-label { display: none; }
+  .fm-filter-btn { padding: 5px 8px; font-size: 11px; }
+  #fm-filter-info { display: none; }
+}
+
+#fm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 2147483647; display: none; align-items: center; justify-content: center;
+  padding: 12px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  animation: fm-fade-in 0.15s ease-out;
+}
+#fm-overlay.fm-open { display: flex; }
+@keyframes fm-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+#fm-modal {
+  background: linear-gradient(160deg, #0e0e16 0%, #1a1a2e 100%);
+  border: 1.5px solid rgba(212,175,55,0.6); border-radius: 18px;
+  padding: 22px 20px 18px; max-width: 440px; width: 100%;
+  max-height: 92vh; overflow-y: auto; color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'BPG Nino Mtavruli', Arial, sans-serif;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.85), 0 0 50px rgba(212,175,55,0.12);
+  animation: fm-slide-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-sizing: border-box;
+}
+@keyframes fm-slide-up {
+  from { transform: translateY(20px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+#fm-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+#fm-name-wrap { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+#fm-name { font-size: 20px; font-weight: 700; color: #fff; margin: 0; line-height: 1.2; word-break: break-word; }
+#fm-fav { background: transparent; border: none; font-size: 22px; cursor: pointer; opacity: 0.3; transition: all 0.2s; padding: 4px; filter: grayscale(1); }
+#fm-fav.fm-active { opacity: 1; filter: none; transform: scale(1.1); }
+#fm-close { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 15px; flex-shrink: 0; transition: all 0.15s; padding: 0; line-height: 1; }
+#fm-close:hover { background: rgba(255,0,0,0.2); border-color: rgba(255,0,0,0.4); }
+#fm-id { font-size: 11px; color: #8a8a9a; margin-bottom: 12px; font-family: 'SF Mono', Menlo, monospace; letter-spacing: 0.3px; }
+#fm-title { color: #D4AF37; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+#fm-title:empty { display: none; }
+#fm-status { font-size: 13px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+.fm-active-txt { color: #4ade80; }
+.fm-inactive-txt { color: #f87171; }
+.fm-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.fm-dot.fm-on  { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+.fm-dot.fm-off { background: #f87171; }
+#fm-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+#fm-stats > div { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.18); border-radius: 10px; padding: 10px 12px; }
+#fm-stats .lbl { font-size: 10px; color: #8a8a9a; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 3px; }
+#fm-stats .val { font-size: 17px; font-weight: 700; color: #fff; display: block; }
+#fm-stats .val-sub { font-size: 10px; color: #8a8a9a; display: block; margin-top: 1px; }
+#fm-sponsor-row { background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+#fm-sponsor-row.fm-hidden { display: none; }
+.fm-sponsor-lbl { color: #8a8a9a; flex-shrink: 0; }
+#fm-sponsor-btn { background: none; border: none; color: #D4AF37; font-weight: 600; cursor: pointer; padding: 0; font-size: inherit; font-family: inherit; text-decoration: underline; text-align: left; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#fm-contact { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 10px; }
+#fm-contact a { background: linear-gradient(135deg, #D4AF37 0%, #B8960B 100%); color: #111; padding: 12px 6px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 12.5px; text-decoration: none; display: flex; align-items: center; justify-content: center; min-height: 46px; transition: transform 0.1s; line-height: 1.2; }
+#fm-contact a:active { transform: scale(0.97); }
+#fm-contact a.fm-disabled { opacity: 0.35; pointer-events: none; background: #333; color: #777; }
+#fm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 14px; }
+#fm-actions button { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 11px 8px; border-radius: 10px; cursor: pointer; font-size: 12.5px; font-weight: 500; font-family: inherit; transition: all 0.15s; min-height: 42px; }
+#fm-actions button:hover, #fm-actions button:active { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.5); }
+#fm-subtree { grid-column: 1 / -1; background: rgba(212,175,55,0.14) !important; border-color: rgba(212,175,55,0.5) !important; color: #D4AF37 !important; font-weight: 700 !important; font-size: 13.5px !important; }
+#fm-subtree:hover { background: rgba(212,175,55,0.22) !important; }
+#fm-notes-wrap label { display: block; font-size: 12px; color: #8a8a9a; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+#fm-notes { width: 100%; min-height: 60px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 12px; color: #fff; font-family: inherit; font-size: 13px; resize: vertical; box-sizing: border-box; line-height: 1.4; }
+#fm-notes:focus { outline: none; border-color: #D4AF37; background: rgba(255,255,255,0.06); }
+#fm-notes::placeholder { color: #5a5a6a; }
+#fm-notes-saved { font-size: 11px; color: #4ade80; margin-top: 4px; opacity: 0; transition: opacity 0.3s; }
+#fm-notes-saved.fm-show { opacity: 1; }
+@media (max-width: 480px) {
+  #fm-modal { padding: 18px 16px 14px; max-height: 94vh; border-radius: 14px; }
+  #fm-name { font-size: 18px; }
+  #fm-contact { gap: 6px; }
+  #fm-contact a { padding: 13px 4px; font-size: 12px; }
+  #fm-stats .val { font-size: 15px; }
+}
+
+</style>
+<script>
+
+(function() {
+  'use strict';
+  if (window.__fmV31Loaded) return;
+  window.__fmV31Loaded = true;
+
+  const LS_NOTES  = 'farmasi_notes_v1';
+  const LS_FAVS   = 'farmasi_favs_v1';
+  const LS_FILTER = 'farmasi_filter_v1';
+
+  function loadLS(key, def) {
+    try { return JSON.parse(localStorage.getItem(key)) || def; } catch (e) { return def; }
+  }
+  function saveLS(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; }
+  }
+  function $(s, c) { return (c || document).querySelector(s); }
+  function fmtNum(n) {
+    if (typeof n !== 'number' || isNaN(n)) return '0';
+    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+  function fmtCompact(n) {
+    if (typeof n !== 'number' || isNaN(n) || n === 0) return '0';
+    if (n < 1000) return String(Math.round(n));
+    if (n < 10000) return (n / 1000).toFixed(1) + 'K';
+    if (n < 1000000) return Math.round(n / 1000) + 'K';
+    return (n / 1000000).toFixed(1) + 'M';
+  }
+
+  // ========== FILTER ==========
+  let currentFilter = 'titled';
+  try {
+    const saved = localStorage.getItem(LS_FILTER);
+    if (saved === 'titled' || saved === 'active' || saved === 'all') currentFilter = saved;
+  } catch (e) {}
+
+  function changeFilter(mode) {
+    if (mode === currentFilter) return;
+    try { localStorage.setItem(LS_FILTER, mode); } catch (e) {}
+    // Reload — fetch block will apply filter before tree renders
+    location.reload();
+  }
+
+  function updateFilterUI() {
+    document.querySelectorAll('.fm-filter-btn').forEach(b => {
+      if (b.dataset.mode === currentFilter) b.classList.add('fm-active');
+      else b.classList.remove('fm-active');
+    });
+    const info = document.getElementById('fm-filter-info');
+    if (info) {
+      let edges = 0;
+      const TREE = window.TREE || {};
+      for (const id in TREE) {
+        if (TREE[id] && TREE[id].c) edges += TREE[id].c.length;
+      }
+      info.textContent = edges > 0 ? fmtCompact(edges) : '';
+    }
+  }
+
+  function buildFilterBar() {
+    if (document.getElementById('fm-filter-bar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'fm-filter-bar';
+    bar.innerHTML =
+      '<span id="fm-filter-label">ფილტრი:</span>' +
+      '<button class="fm-filter-btn" data-mode="titled">⭐ ტიტულიანები</button>' +
+      '<button class="fm-filter-btn" data-mode="active">💚 აქტიური</button>' +
+      '<button class="fm-filter-btn" data-mode="all">👥 ყველა</button>' +
+      '<span id="fm-filter-info"></span>';
+    document.body.appendChild(bar);
+    bar.querySelectorAll('.fm-filter-btn').forEach(b => {
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeFilter(b.dataset.mode);
+      });
+    });
+    updateFilterUI();
+  }
+
+  // ========== NODE DATA ==========
+  function getOrigChildren(id) {
+    if (window.__fmOrigChildren && window.__fmOrigChildren[id]) return window.__fmOrigChildren[id];
+    const t = (window.TREE || {})[id];
+    return (t && t.c) || [];
+  }
+
+  function getNode(id) {
+    const t = (window.TREE  || {})[id] || {};
+    const u = (window.USERS || {})[id] || {};
+    const name   = t.n || t.name || u.n || u.name || u.fullName || 'უცნობი';
+    const title  = t.t || t.title || u.t || u.title || '';
+    const bonus  = t.b ?? t.bonus ?? u.b ?? u.bonus ?? null;
+    const pv     = +(t.pv ?? u.pv ?? 0) || 0;
+    const gv     = +(t.gv ?? u.gv ?? 0) || 0;
+    const mobile = (t.m || t.mobile || t.phone || u.m || u.mobile || u.phone || '').toString().trim();
+    const sponsor= t.s || t.sponsor || t.parent || u.s || u.sponsor || null;
+    const origC = getOrigChildren(id);
+    const curC  = t.c || origC;
+    const team = countDescendantsOrig(id);
+    return {
+      id, name, title, bonus, pv, gv, mobile, sponsor,
+      team, level1Original: origC.length, level1Filtered: curC.length,
+      active: pv > 0
+    };
+  }
+
+  const _teamCache = new Map();
+  function countDescendantsOrig(id) {
+    if (_teamCache.has(id)) return _teamCache.get(id);
+    if (!window.TREE || !window.TREE[id]) return 0;
+    const visited = new Set([id]);
+    const queue = getOrigChildren(id).slice();
+    while (queue.length) {
+      const cur = queue.shift();
+      if (visited.has(cur)) continue;
+      visited.add(cur);
+      const kids = getOrigChildren(cur);
+      if (kids.length) queue.push(...kids);
+    }
+    const n = visited.size - 1;
+    _teamCache.set(id, n);
+    return n;
+  }
+
+  // ========== MODAL ==========
+  function buildModal() {
+    if ($('#fm-overlay')) return;
+    const div = document.createElement('div');
+    div.innerHTML = `
+<div id="fm-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="fm-modal">
+    <div id="fm-header">
+      <div id="fm-name-wrap">
+        <h2 id="fm-name"></h2>
+        <button id="fm-fav" title="ფავორიტი">⭐</button>
+      </div>
+      <button id="fm-close" title="დახურვა">✕</button>
+    </div>
+    <div id="fm-id"></div>
+    <div id="fm-title"></div>
+    <div id="fm-status"></div>
+    <div id="fm-stats">
+      <div><span class="lbl">PV</span><span class="val" id="fm-pv">0</span></div>
+      <div><span class="lbl">GV</span><span class="val" id="fm-gv">0</span></div>
+      <div><span class="lbl">გუნდი (სრული)</span><span class="val" id="fm-team">0</span></div>
+      <div><span class="lbl">1-ლი დონე</span><span class="val" id="fm-level1">0</span><span class="val-sub" id="fm-level1-sub"></span></div>
+    </div>
+    <div id="fm-sponsor-row" class="fm-hidden">
+      <span class="fm-sponsor-lbl">👤 სპონსორი:</span>
+      <button id="fm-sponsor-btn"></button>
+    </div>
+    <div id="fm-contact">
+      <a id="fm-call" href="#">📞 დარეკვა</a>
+      <a id="fm-sms" href="#">💬 SMS</a>
+      <a id="fm-wa" href="#" target="_blank" rel="noopener">📱 WhatsApp</a>
+    </div>
+    <div id="fm-actions">
+      <button id="fm-subtree">🌳 ქვეხის ნახვა</button>
+      <button id="fm-copy">📋 ინფოს კოპი</button>
+      <button id="fm-search-here">🔍 ხეში პოვნა</button>
+    </div>
+    <div id="fm-notes-wrap">
+      <label for="fm-notes">📝 შენიშვნა</label>
+      <textarea id="fm-notes" placeholder="დაწერე რამე ამ წევრზე..."></textarea>
+      <div id="fm-notes-saved">✓ შენახულია</div>
+    </div>
+  </div>
+</div>`;
+    document.body.appendChild(div.firstElementChild);
+    bindEvents();
+  }
+
+  let currentId = null;
+  let notesSaveTimer = null;
+
+  function openModal(id) {
+    if (!id) return;
+    id = String(id);
+    if (!window.TREE || !window.TREE[id]) {
+      console.warn('fm: node not found:', id);
+      return;
+    }
+    buildModal();
+    currentId = id;
+    const d = getNode(id);
+    $('#fm-name').textContent = d.name;
+    $('#fm-id').textContent = 'ID: ' + d.id;
+    const titleEl = $('#fm-title');
+    if (d.title) {
+      let s = '🏆 ' + d.title;
+      if (d.bonus != null && d.bonus !== '' && d.bonus !== 0) s += ' (' + d.bonus + '%)';
+      titleEl.textContent = s;
+      titleEl.style.display = '';
+    } else {
+      titleEl.textContent = ''; titleEl.style.display = 'none';
+    }
+    const st = $('#fm-status');
+    if (d.active) {
+      st.innerHTML = '<span class="fm-dot fm-on"></span><span class="fm-active-txt">აქტიური</span>';
+    } else {
+      st.innerHTML = '<span class="fm-dot fm-off"></span><span class="fm-inactive-txt">არააქტიური</span>';
+    }
+    $('#fm-pv').textContent     = fmtNum(d.pv);
+    $('#fm-gv').textContent     = fmtNum(d.gv);
+    $('#fm-team').textContent   = fmtCompact(d.team);
+    $('#fm-level1').textContent = fmtNum(d.level1Original);
+    const sub = $('#fm-level1-sub');
+    if (currentFilter !== 'all' && d.level1Filtered !== d.level1Original) {
+      sub.textContent = fmtNum(d.level1Filtered) + ' ჩანს';
+    } else {
+      sub.textContent = '';
+    }
+    const spRow = $('#fm-sponsor-row');
+    const spBtn = $('#fm-sponsor-btn');
+    if (d.sponsor && window.TREE[d.sponsor]) {
+      const sp = getNode(d.sponsor);
+      spBtn.textContent = sp.name + (sp.title ? ' (' + sp.title + ')' : '');
+      spBtn.dataset.id = d.sponsor;
+      spRow.classList.remove('fm-hidden');
+    } else {
+      spRow.classList.add('fm-hidden');
+    }
+    const rawPhone = (d.mobile || '').replace(/\D+/g, '');
+    const call = $('#fm-call'), sms = $('#fm-sms'), wa = $('#fm-wa');
+    if (rawPhone.length >= 8) {
+      const phoneFull = rawPhone.length === 9 && rawPhone.startsWith('5')
+        ? '995' + rawPhone
+        : (rawPhone.startsWith('995') ? rawPhone : rawPhone);
+      call.href = 'tel:+' + phoneFull;
+      sms.href  = 'sms:+' + phoneFull;
+      wa.href   = 'https://wa.me/' + phoneFull;
+      call.classList.remove('fm-disabled');
+      sms.classList.remove('fm-disabled');
+      wa.classList.remove('fm-disabled');
+    } else {
+      call.href='#'; sms.href='#'; wa.href='#';
+      call.classList.add('fm-disabled');
+      sms.classList.add('fm-disabled');
+      wa.classList.add('fm-disabled');
+    }
+    const favs = loadLS(LS_FAVS, {});
+    const favBtn = $('#fm-fav');
+    if (favs[id]) favBtn.classList.add('fm-active');
+    else favBtn.classList.remove('fm-active');
+    const notes = loadLS(LS_NOTES, {});
+    $('#fm-notes').value = notes[id] || '';
+    $('#fm-notes-saved').classList.remove('fm-show');
+    $('#fm-overlay').classList.add('fm-open');
+    $('#fm-overlay').setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    const ov = $('#fm-overlay');
+    if (ov) { ov.classList.remove('fm-open'); ov.setAttribute('aria-hidden', 'true'); }
+    currentId = null;
+  }
+
+  function bindEvents() {
+    $('#fm-close').addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+    $('#fm-overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'fm-overlay') closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $('#fm-overlay').classList.contains('fm-open')) closeModal();
+    });
+    $('#fm-sponsor-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const spId = e.currentTarget.dataset.id;
+      if (spId) openModal(spId);
+    });
+    $('#fm-fav').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentId) return;
+      const favs = loadLS(LS_FAVS, {});
+      if (favs[currentId]) { delete favs[currentId]; $('#fm-fav').classList.remove('fm-active'); }
+      else { favs[currentId] = Date.now(); $('#fm-fav').classList.add('fm-active'); }
+      saveLS(LS_FAVS, favs);
+    });
+    $('#fm-subtree').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentId) return;
+      goToSubtree(currentId);
+    });
+    $('#fm-copy').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!currentId) return;
+      const d = getNode(currentId);
+      const text = [
+        d.name,
+        'ID: ' + d.id,
+        d.title ? 'ტიტული: ' + d.title + (d.bonus ? ' (' + d.bonus + '%)' : '') : '',
+        'PV: ' + fmtNum(d.pv),
+        'GV: ' + fmtNum(d.gv),
+        'გუნდი: ' + fmtNum(d.team),
+        '1-ლი დონე: ' + fmtNum(d.level1Original),
+        d.mobile ? 'ტელ: ' + d.mobile : ''
+      ].filter(Boolean).join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = $('#fm-copy');
+        const old = btn.textContent;
+        btn.textContent = '✓ დაკოპირდა';
+        setTimeout(() => btn.textContent = old, 1500);
+      } catch (err) {
+        alert('კოპირება ვერ მოხერხდა:\n\n' + text);
+      }
+    });
+    $('#fm-search-here').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentId) return;
+      const d = getNode(currentId);
+      closeModal();
+      const selectors = ['#searchInput', '#search', 'input[type="search"]', '.search-input', 'input[name="search"]'];
+      for (const s of selectors) {
+        const inp = document.querySelector(s);
+        if (inp) {
+          inp.value = d.name; inp.focus();
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          inp.dispatchEvent(new Event('change', { bubbles: true }));
+          return;
+        }
+      }
+    });
+    $('#fm-notes').addEventListener('input', () => {
+      if (!currentId) return;
+      clearTimeout(notesSaveTimer);
+      notesSaveTimer = setTimeout(() => {
+        const notes = loadLS(LS_NOTES, {});
+        const v = $('#fm-notes').value.trim();
+        if (v) notes[currentId] = v; else delete notes[currentId];
+        saveLS(LS_NOTES, notes);
+        const saved = $('#fm-notes-saved');
+        saved.classList.add('fm-show');
+        setTimeout(() => saved.classList.remove('fm-show'), 1200);
+      }, 500);
+    });
+  }
+
+  function goToSubtree(id) {
+    closeModal();
+    const fns = ['focusOn','focusNode','drillDown','drillInto','showSubtree',
+                 'loadSubtree','openSubtree','goToNode','openNode',
+                 'renderSubtree','zoomToNode','setRoot','navigateToNode',
+                 'focusUser','drillToUser','showUser','selectNode',
+                 'handleNodeClick','onNodeClick','nodeClick','clickNode'];
+    for (const fn of fns) {
+      if (typeof window[fn] === 'function') {
+        try { window[fn](id); return true; } catch (e) { console.warn('fm: ' + fn + ' failed', e); }
+      }
+    }
+    if (lastClickedEl && document.body.contains(lastClickedEl)) {
+      window.__fmBypass = true;
+      try {
+        ['mousedown','mouseup','click'].forEach(type => {
+          const evt = new MouseEvent(type, { bubbles: true, cancelable: true, view: window });
+          lastClickedEl.dispatchEvent(evt);
+        });
+      } catch (e) {}
+      setTimeout(() => { window.__fmBypass = false; }, 150);
+      return true;
+    }
+    alert('ქვეხეში გადასვლის ფუნქცია ვერ მოიძებნა.');
+    return false;
+  }
+
+  let lastClickedEl = null;
+
+  function deepFindId(obj, depth) {
+    depth = depth || 0;
+    if (!obj || depth > 5) return null;
+    if (typeof obj === 'string' || typeof obj === 'number') {
+      const s = String(obj);
+      if (window.TREE && window.TREE[s]) return s;
+      return null;
+    }
+    if (typeof obj !== 'object') return null;
+    for (const k of ['id','pid','uid','nodeId','memberId','userId']) {
+      if (obj[k] != null) { const r = deepFindId(obj[k], depth + 1); if (r) return r; }
+    }
+    for (const k of ['data','node','original','_data','datum']) {
+      if (obj[k] != null) { const r = deepFindId(obj[k], depth + 1); if (r) return r; }
+    }
+    return null;
+  }
+
+  function findNodeIdFromTarget(target) {
+    let el = target; let safety = 25;
+    while (el && el !== document && safety-- > 0) {
+      if (el.attributes) {
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i]; const v = attr.value;
+          if (v && window.TREE && window.TREE[v]) return v;
+          if (v) { const m = /(\d{8,})/.exec(v); if (m && window.TREE && window.TREE[m[1]]) return m[1]; }
+        }
+      }
+      if (el.dataset) {
+        for (const k in el.dataset) {
+          const v = el.dataset[k];
+          if (v && window.TREE && window.TREE[v]) return v;
+        }
+      }
+      if (el.__data__) { const id = deepFindId(el.__data__); if (id) return id; }
+      el = el.parentElement || el.parentNode;
+    }
+    return null;
+  }
+
+  function handleClickLike(e) {
+    if (window.__fmBypass) return;
+    if (e.target.closest && e.target.closest('#fm-overlay')) return;
+    if (e.target.closest && e.target.closest('#fm-filter-bar')) return;
+    const tag = (e.target.tagName || '').toUpperCase();
+    if (['INPUT','TEXTAREA','SELECT'].includes(tag)) return;
+    const id = findNodeIdFromTarget(e.target);
+    if (window.__fmDebug) {
+      console.log('fm debug:', e.type, 'tag=', tag, 'id-found=', id || '(none)');
+    }
+    if (id) {
+      lastClickedEl = e.target;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (e.type === 'click' || e.type === 'pointerup') openModal(id);
+    }
+  }
+
+  document.addEventListener('pointerdown', handleClickLike, true);
+  document.addEventListener('mousedown',  handleClickLike, true);
+  document.addEventListener('click',       handleClickLike, true);
+
+  function wrapGlobalFns() {
+    const fnNames = ['drillDown','focusOn','selectNode','showUser','openNode','goToNode'];
+    for (const name of fnNames) {
+      const orig = window[name];
+      if (typeof orig === 'function' && !orig.__fmWrapped) {
+        const wrapped = function(...args) {
+          let id = null; const a = args[0];
+          if (a != null) {
+            if (typeof a === 'string' || typeof a === 'number') id = String(a);
+            else if (a.id != null) id = String(a.id);
+            else if (a.data && a.data.id != null) id = String(a.data.id);
+          }
+          if (id && window.TREE && window.TREE[id] && !window.__fmBypass) {
+            openModal(id); return;
+          }
+          return orig.apply(this, args);
+        };
+        wrapped.__fmWrapped = true;
+        window[name] = wrapped;
+      }
+    }
+  }
+
+  window.openFarmasiModal = openModal;
+  window.closeFarmasiModal = closeModal;
+  window.farmasiFavorites = () => loadLS(LS_FAVS, {});
+  window.farmasiNotes = () => loadLS(LS_NOTES, {});
+  window.farmasiFilter = (mode) => {
+    if (['titled','active','all'].includes(mode)) changeFilter(mode);
+    else return currentFilter;
+  };
+
+  function waitForTreeAndUpdate() {
+    if (window.TREE && Object.keys(window.TREE).length > 100) {
+      updateFilterUI();
+    } else {
+      setTimeout(waitForTreeAndUpdate, 300);
+    }
+  }
+
+  function init() {
+    buildModal();
+    buildFilterBar();
+    wrapGlobalFns();
+    setTimeout(wrapGlobalFns, 500);
+    setTimeout(wrapGlobalFns, 2000);
+    waitForTreeAndUpdate();
+    console.log('✅ FARMASI Modal V3.1 loaded. Filter:', currentFilter);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+</script>
+<!-- FARMASI_MODAL_V3_END -->
+</body>
+</html// Build FULL subtree with ALL children up to maxDepth
+function buildFullSub(pid, depth, maxDepth, seen){
+  seen = new Set(Array.from(seen).concat([pid]));
+  const n = TREE[pid];
+  if(!n) return {name:pid, pid:pid, size:0, direct:0, children:[]};
+  const ch = n.c || [];
+  const res = {name:n.n, pid:pid, size:n.s||0, direct:ch.length, children:[]};
+  if(depth < maxDepth && ch.length){
+    for(let k=0; k<ch.length; k++){
+      const cp = ch[k];
+      if(!seen.has(cp)){
+        const c = buildFullSub(cp, depth+1, maxDepth, seen);
+        if(c) res.children.push(c);
+      }
+    }
+  }
+  return res;
+}
+
+function applyFilter(){
+  if(!rootN) return;
+  
+  const btn = document.getElementById('filter-btn');
+  const anyActive = filterLevel !== 'all' || filterStatus !== 'all' || filterTitle !== 'all';
+  btn.classList.toggle('active', anyActive);
+  btn.textContent = anyActive ? '🔍 ფილტრი ●' : '🔍 ფილტრი';
+  
+  // If no filter active, rebuild normal tree
+  if(!anyActive){
+    const rootPid = rootN.data.pid;
+    const newData = buildSub(rootPid, 0, 5, new Set());
+    rootN = d3.hierarchy(newData);
+    rootN.x0 = 0; rootN.y0 = 0;
+    function col(d){if(d.children){d._children=d.children;d._children.forEach(col);d.children=null;}}
+    if(rootN.children) rootN.children.forEach(col);
+    update(rootN);
+    return;
+  }
+  
+  // Build full tree with all children up to level required
+  const targetLvl = filterLevel !== 'all' ? parseInt(filterLevel) : 4;
+  const rootPid = rootN.data.pid;
+  const newData = buildFullSub(rootPid, 0, targetLvl, new Set());
+  
+  // Check if node matches filter
+  function matches(node, depth){
+    if(depth === 0) return false; // root doesn't count
+    const pid = node.pid;
+    const b = BONUS[pid];
+    const active = ACTIVE[pid];
+    
+    if(filterLevel !== 'all' && depth !== parseInt(filterLevel)) return false;
+    if(filterStatus === 'active' && !active) return false;
+    if(filterStatus === 'inactive' && active) return false;
+    if(filterTitle !== 'all'){
+      const targetPct = parseInt(filterTitle);
+      const actualPct = b ? b.pct : 0;
+      if(actualPct !== targetPct) return false;
+    }
+    return true;
+  }
+  
+  // Mark which nodes match OR are ancestors of matches
+  function markKeep(node, depth){
+    let hasMatch = matches(node, depth);
+    if(node.children){
+      for(let i=0; i<node.children.length; i++){
+        if(markKeep(node.children[i], depth+1)){
+          hasMatch = true;
+        }
+      }
+    }
+    node._keep = hasMatch || depth === 0;
+    return hasMatch;
+  }
+  markKeep(newData, 0);
+  
+  // Remove non-keeping branches
+  function prune(node){
+    if(!node.children) return;
+    node.children = node.children.filter(function(c){return c._keep;});
+    if(node.children.length === 0){
+      node.children = undefined;
+    } else {
+      node.children.forEach(prune);
+    }
+  }
+  prune(newData);
+  
+  // Rebuild d3 hierarchy
+  rootN = d3.hierarchy(newData);
+  rootN.x0 = 0; rootN.y0 = 0;
+  // Keep everything expanded (no collapsing for filtered view)
+  update(rootN);
+  
+  // Center the view
+  setTimeout(function(){
+    if(isVertical){
+      svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(W()/2, 80).scale(isMob?.55:.85));
+    } else {
+      const sc = isMob ? .6 : .9;
+      const tx = isMob ? 80 : 120;
+      svgEl.transition().duration(600).call(zFn.transform, d3.zoomIdentity.translate(tx, H()/2).scale(sc));
+    }
+  }, 400);
+}
+
+>
